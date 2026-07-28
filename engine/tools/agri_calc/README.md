@@ -20,27 +20,27 @@ Rounding rules are isolated in `constants.py` under the `ROUNDING_MODE = "defaul
 
 ### 1. fertiliser_rate
 Determines the recommendation matches in the database using a strict match-ranking penalty check on optional `soil_class` and `target_yield` variables (raising errors on crop/zone mismatches). It then nets out requirements sequentially across split applications:
-$$\text{product\_kg\_ha} = \frac{\text{basis\_nutrient\_target} \times \text{split\_fraction}}{\text{nutrient\_concentration\_pct} / 100}$$
-$$\text{total\_product\_kg} = \text{product\_kg\_ha} \times \text{area\_ha}$$
-$$\text{bags} = \lceil \frac{\text{total\_product\_kg}}{\text{bag\_weight\_kg}} \rceil$$
+$$\text{Product kg per ha} = \frac{\text{Basis Nutrient Target} \times \text{Split Fraction}}{\text{Nutrient Concentration \%} / 100}$$
+$$\text{Total Product kg} = \text{Product kg per ha} \times \text{Area ha}$$
+$$\text{Bags} = \lceil \frac{\text{Total Product kg}}{\text{Bag Weight kg}} \rceil$$
 Nutrients supplied by earlier splits are deducted from subsequent split targets to avoid double counting. Over- or under-allocations are reported in the `unallocated_nutrients_kg` result dictionary.
 
 ### 2. seed_rate
 Calculates planting materials. It first looks up the crop's material type in the database. For true seed crops (`material_type = 'seed'`), it calculates plant population, adjusts it for germination rate, and multiplies by the 1000-seed weight:
-$$\text{stands\_per\_ha} = \frac{10000.0}{\text{row\_m} \times \text{within\_row\_m}}$$
-$$\text{seed\_kg} = \frac{\text{stands\_per\_ha} \times \text{seeds\_per\_stand} \times \text{area\_ha} \times (\text{unit\_weight\_g} / 1000) / 1000}{\text{germination\_pct} / 100}$$
+$$\text{Stands per ha} = \frac{10000.0}{\text{Row Spacing (m)} \times \text{Within-row Spacing (m)}}$$
+$$\text{Seed kg} = \frac{\text{Stands per ha} \times \text{Seeds per stand} \times \text{Area ha} \times (\text{1000-seed weight (g)} / 1000) / 1000}{\text{Germination \%} / 100}$$
 For vegetative crops (`material_type` in `('cutting', 'sett')`), it multiplies plant population by the cuttings per stand, and converts it to bundles if a standard bundle size is documented:
-$$\text{cuttings} = \text{stands\_per\_ha} \times \text{area\_ha} \times \text{stands\_per\_unit}$$
-$$\text{bundles} = \lceil \frac{\text{cuttings}}{\text{units\_per\_bundle}} \rceil$$
+$$\text{Cuttings} = \text{Stands per ha} \times \text{Area ha} \times \text{Cuttings per stand}$$
+$$\text{Bundles} = \lceil \frac{\text{Cuttings}}{\text{Cuttings per bundle}} \rceil$$
 
 ### 3. spray_dilution
 Calculates chemical dilution rates for knapsack sprayers. It reads recommendation rates and safety Pre-Harvest Intervals (PHI) from the database, then calculates the concentration needed per tank:
-$$\text{amount\_per\_tank} = \text{rate\_per\_ha} \times \frac{\text{tank\_litres}}{\text{spray\_volume\_l\_per\_ha}}$$
+$$\text{Amount per tank} = \text{Application rate per ha} \times \frac{\text{Tank volume (L)}}{\text{Spray volume per ha (L)}}$$
 If the database rate unit is `kg` or `L`, it multiplies the output by 1000 to convert to grams (`g`) or milliliters (`ml`) respectively to match measuring-cup precision.
 
 ### 4. gross_margin
 Performs a financial analysis based on yield and price. To prevent rounding error accumulation, cost item details are kept as unrounded floats, and rounding is applied only to the final aggregates:
-$$\text{revenue} = \text{yield\_kg} \times \text{price\_per\_kg}$$
-$$\text{total\_cost} = \sum \text{cost\_item.amount}$$
-$$\text{margin} = \text{revenue} - \text{total\_cost}$$
+$$\text{Revenue} = \text{Yield (kg)} \times \text{Price per kg}$$
+$$\text{Total Cost} = \sum \text{Cost Item Amount}$$
+$$\text{Margin} = \text{Revenue} - \text{Total Cost}$$
 All three outputs are rounded to the nearest whole unit of the specified currency.
