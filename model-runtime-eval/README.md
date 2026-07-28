@@ -1,4 +1,4 @@
-# mujeebat — model runtime setup + evaluation baseline
+# model-runtime-eval — model runtime setup + evaluation baseline
 
 Contents from getting the raw model running locally and establishing the
 "embarrassing baseline" (Section 9.1 of the blueprint: raw model, no RAG,
