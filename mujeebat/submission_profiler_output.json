@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "profiler_version": "adtc-profiler 0.1.0",
+  "submission": {
+    "team_id": "TODO-fill-in-your-registered-team-id",
+    "domain": "agriculture",
+    "language_scope": [
+      "en",
+      "yo",
+      "ha",
+      "pcm"
+    ],
+    "african_alpha_claim": true,
+    "budget_laptop_claim": true,
+    "submitter": {
+      "name": "Muritala Mujeebat",
+      "email": "murrymujjy@gmail.com",
+      "github_handle": "TODO-your-github-handle"
+    },
+    "cross_disciplinary_pairing": {
+      "discipline": "agriculture",
+      "load_bearing": true,
+      "description": "Structured knowledge base (crop calendars, fertilizer rates, agrochemical registrations) plus retrieval over Nigerian extension bulletins grounds every answer in verifiable agronomic fact rather than model recall, targeting extension agents and agrodealers operating fully offline."
+    },
+    "test_prompts": [
+      {
+        "prompt_id": "tp_001",
+        "prompt": "When should I plant maize in Oyo State, and what NPK rate should I apply?"
+      },
+      {
+        "prompt_id": "tp_002",
+        "prompt": "My maize leaves have ragged holes and there is sawdust-like material in the whorl. What is wrong and what should I do?"
+      }
+    ],
+    "model": {
+      "name": "Qwen2.5-1.5B-Instruct-Q4_K_M",
+      "runtime": "llama.cpp",
+      "quantization": "GGUF Q4_K_M",
+      "parameters_estimate": "1.5B",
+      "packaging": "binary_bundle"
+    }
+  },
+  "environment": {
+    "measured_on": "participant_laptop",
+    "cpu_model": "Intel64 Family 6 Model 69 Stepping 1, GenuineIntel",
+    "ram_gb": 7.6,
+    "gpu": "none",
+    "os": "Windows-10-10.0.21996-SP0"
+  },
+  "throughput": {
+    "tokens_per_second_generation": 8.73,
+    "first_token_latency_ms": 17746.58,
+    "prompt_tokens": 512,
+    "generated_tokens": 128
+  },
+  "memory": {
+    "peak_rss_mb": 1720.47,
+    "steady_state_rss_mb": 1632.78,
+    "peak_vms_mb": 1056.11
+  },
+  "accuracy": [],
+  "cpu_thermal": {
+    "cpu_percent_p99": 100.0,
+    "core_temp_c_peak": null,
+    "throttled": false
+  },
+  "reproducibility": {
+    "git_commit_sha": "726d78eec300",
+    "docker_image_digest": "unknown",
+    "random_seed": 42
+  },
+  "model_info": {
+    "params_count": null,
+    "context_length": 32768,
+    "architecture": "qwen2",
+    "claimed_params_estimate": "1.5B",
+    "params_match": true
+  }
+}
