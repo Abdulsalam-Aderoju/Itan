@@ -1,0 +1,2013 @@
+[
+  {
+    "id": "FR-001",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna",
+      "matched_exactly": true,
+      "matched_soil_class": null,
+      "matched_target_yield": null,
+      "nutrient_totals_kg": {
+        "N": 120.0,
+        "P2O5": 60.0,
+        "K2O": 60.0
+      },
+      "unallocated_nutrients_kg": {
+        "N": 0.0,
+        "P2O5": 0.0,
+        "K2O": 0.0
+      },
+      "applications": [
+        {
+          "timing_label": "basal (at planting)",
+          "product_name": "NPK 15-15-15",
+          "product_kg": 400.0,
+          "bags": 8,
+          "bags_exact": 8.0
+        },
+        {
+          "timing_label": "top-dress (6 WAP)",
+          "product_name": "Urea",
+          "product_kg": 130.43,
+          "bags": 3,
+          "bags_exact": 2.608695652173913
+        }
+      ],
+      "source_ids": [
+        "naerls_maize_2021_p14"
+      ]
+    },
+    "source_id": "naerls_maize_2021_p14",
+    "notes": "standard 120-60-60 recommendation, basal NPK + urea top-dress"
+  },
+  {
+    "id": "FR-002",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 0.1,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 0.1,
+      "zone": "Northern Guinea Savanna",
+      "matched_exactly": true,
+      "matched_soil_class": null,
+      "matched_target_yield": null,
+      "nutrient_totals_kg": {
+        "N": 12.0,
+        "P2O5": 6.0,
+        "K2O": 6.0
+      },
+      "unallocated_nutrients_kg": {
+        "N": 0.0,
+        "P2O5": 0.0,
+        "K2O": 0.0
+      },
+      "applications": [
+        {
+          "timing_label": "basal (at planting)",
+          "product_name": "NPK 15-15-15",
+          "product_kg": 40.0,
+          "bags": 1,
+          "bags_exact": 0.8
+        },
+        {
+          "timing_label": "top-dress (6 WAP)",
+          "product_name": "Urea",
+          "product_kg": 13.04,
+          "bags": 1,
+          "bags_exact": 0.26086956521739135
+        }
+      ],
+      "source_ids": [
+        "naerls_maize_2021_p14"
+      ]
+    },
+    "source_id": "naerls_maize_2021_p14",
+    "notes": "smallholder 0.1 ha test, verifying bag rounding limits (ceil)"
+  },
+  {
+    "id": "FR-003",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 10.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 10.0,
+      "zone": "Northern Guinea Savanna",
+      "matched_exactly": true,
+      "matched_soil_class": null,
+      "matched_target_yield": null,
+      "nutrient_totals_kg": {
+        "N": 1200.0,
+        "P2O5": 600.0,
+        "K2O": 600.0
+      },
+      "unallocated_nutrients_kg": {
+        "N": 0.0,
+        "P2O5": 0.0,
+        "K2O": 0.0
+      },
+      "applications": [
+        {
+          "timing_label": "basal (at planting)",
+          "product_name": "NPK 15-15-15",
+          "product_kg": 4000.0,
+          "bags": 80,
+          "bags_exact": 80.0
+        },
+        {
+          "timing_label": "top-dress (6 WAP)",
+          "product_name": "Urea",
+          "product_kg": 1304.35,
+          "bags": 27,
+          "bags_exact": 26.08695652173913
+        }
+      ],
+      "source_ids": [
+        "naerls_maize_2021_p14"
+      ]
+    },
+    "source_id": "naerls_maize_2021_p14",
+    "notes": "large commercial 10.0 ha test"
+  },
+  {
+    "id": "FR-004",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna",
+      "soil_class": "clayey"
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna",
+      "matched_exactly": false,
+      "matched_soil_class": null,
+      "matched_target_yield": null,
+      "nutrient_totals_kg": {
+        "N": 120.0,
+        "P2O5": 60.0,
+        "K2O": 60.0
+      },
+      "unallocated_nutrients_kg": {
+        "N": 0.0,
+        "P2O5": 0.0,
+        "K2O": 0.0
+      },
+      "applications": [
+        {
+          "timing_label": "basal (at planting)",
+          "product_name": "NPK 15-15-15",
+          "product_kg": 400.0,
+          "bags": 8,
+          "bags_exact": 8.0
+        },
+        {
+          "timing_label": "top-dress (6 WAP)",
+          "product_name": "Urea",
+          "product_kg": 130.43,
+          "bags": 3,
+          "bags_exact": 2.608695652173913
+        }
+      ],
+      "source_ids": [
+        "naerls_maize_2021_p14"
+      ]
+    },
+    "source_id": "naerls_maize_2021_p14",
+    "notes": "soil class fallback to general zone recommendation"
+  },
+  {
+    "id": "FR-005",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna",
+      "target_yield": 4.5
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna",
+      "matched_exactly": false,
+      "matched_soil_class": null,
+      "matched_target_yield": null,
+      "nutrient_totals_kg": {
+        "N": 120.0,
+        "P2O5": 60.0,
+        "K2O": 60.0
+      },
+      "unallocated_nutrients_kg": {
+        "N": 0.0,
+        "P2O5": 0.0,
+        "K2O": 0.0
+      },
+      "applications": [
+        {
+          "timing_label": "basal (at planting)",
+          "product_name": "NPK 15-15-15",
+          "product_kg": 400.0,
+          "bags": 8,
+          "bags_exact": 8.0
+        },
+        {
+          "timing_label": "top-dress (6 WAP)",
+          "product_name": "Urea",
+          "product_kg": 130.43,
+          "bags": 3,
+          "bags_exact": 2.608695652173913
+        }
+      ],
+      "source_ids": [
+        "naerls_maize_2021_p14"
+      ]
+    },
+    "source_id": "naerls_maize_2021_p14",
+    "notes": "target yield fallback to general zone recommendation"
+  },
+  {
+    "id": "FR-006",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "zone": "Wet Guinea Savanna"
+    },
+    "expected": {
+      "error": "MissingConstantError"
+    },
+    "source_id": "system",
+    "notes": "expects MissingConstantError due to invalid/missing zone"
+  },
+  {
+    "id": "FR-007",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "wheat",
+      "area_ha": 1.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": {
+      "error": "MissingConstantError"
+    },
+    "source_id": "system",
+    "notes": "expects MissingConstantError due to invalid crop"
+  },
+  {
+    "id": "FR-008",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "tomato",
+      "area_ha": 1.0,
+      "zone": "Sudan Savanna"
+    },
+    "expected": {
+      "crop": "tomato",
+      "area_ha": 1.0,
+      "zone": "Sudan Savanna",
+      "matched_exactly": true,
+      "matched_soil_class": null,
+      "matched_target_yield": null,
+      "nutrient_totals_kg": {
+        "N": 50.0,
+        "P2O5": 50.0,
+        "K2O": 50.0
+      },
+      "unallocated_nutrients_kg": {
+        "N": 50.0,
+        "P2O5": 0.0,
+        "K2O": 30.0
+      },
+      "applications": [
+        {
+          "timing_label": "basal",
+          "product_name": "NPK 15-15-15",
+          "product_kg": 333.33,
+          "bags": 7,
+          "bags_exact": 6.666666666666668
+        }
+      ],
+      "source_ids": [
+        "tomato_sudan_2020",
+        "naerls_maize_2021_p14"
+      ]
+    },
+    "source_id": "tomato_sudan_2020",
+    "notes": "verifies unallocated nutrient discrepancy mapping"
+  },
+  {
+    "id": "FR-009",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": -1.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "negative area ha triggers InvalidInputError"
+  },
+  {
+    "id": "FR-010",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 10.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 10"
+  },
+  {
+    "id": "FR-011",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 11.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 11"
+  },
+  {
+    "id": "FR-012",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 12.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 12"
+  },
+  {
+    "id": "FR-013",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 13.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 13"
+  },
+  {
+    "id": "FR-014",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 14.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 14"
+  },
+  {
+    "id": "FR-015",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 15.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 15"
+  },
+  {
+    "id": "FR-016",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 16.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 16"
+  },
+  {
+    "id": "FR-017",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 17.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 17"
+  },
+  {
+    "id": "FR-018",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 18.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 18"
+  },
+  {
+    "id": "FR-019",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 19.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 19"
+  },
+  {
+    "id": "FR-020",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 20.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 20"
+  },
+  {
+    "id": "FR-021",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 21.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 21"
+  },
+  {
+    "id": "FR-022",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 22.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 22"
+  },
+  {
+    "id": "FR-023",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 23.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 23"
+  },
+  {
+    "id": "FR-024",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 24.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 24"
+  },
+  {
+    "id": "FR-025",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 25.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 25"
+  },
+  {
+    "id": "FR-026",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 26.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 26"
+  },
+  {
+    "id": "FR-027",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 27.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 27"
+  },
+  {
+    "id": "FR-028",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 28.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 28"
+  },
+  {
+    "id": "FR-029",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 29.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 29"
+  },
+  {
+    "id": "FR-030",
+    "function": "fertiliser_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 30.0,
+      "zone": "Northern Guinea Savanna"
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded fertiliser_rate validation entry 30"
+  },
+  {
+    "id": "SR-001",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0,
+      "seeds_per_stand": 1
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0,
+      "seeds_per_stand": 1,
+      "material_type": "seed",
+      "plant_population": 53333.333333333336,
+      "seed_kg": 15.69,
+      "cuttings_count": null,
+      "cuttings_exact": null,
+      "bundles": null,
+      "bundles_exact": null,
+      "source_ids": [
+        "maize_seed_ref"
+      ]
+    },
+    "source_id": "maize_seed_ref",
+    "notes": "baseline seed weight for maize"
+  },
+  {
+    "id": "SR-002",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 0.1,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0,
+      "seeds_per_stand": 1
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 0.1,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0,
+      "seeds_per_stand": 1,
+      "material_type": "seed",
+      "plant_population": 5333.333333333334,
+      "seed_kg": 1.57,
+      "cuttings_count": null,
+      "cuttings_exact": null,
+      "bundles": null,
+      "bundles_exact": null,
+      "source_ids": [
+        "maize_seed_ref"
+      ]
+    },
+    "source_id": "maize_seed_ref",
+    "notes": "smallholder plot maize seed weight"
+  },
+  {
+    "id": "SR-003",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 5.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0,
+      "seeds_per_stand": 2
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 5.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0,
+      "seeds_per_stand": 2,
+      "material_type": "seed",
+      "plant_population": 266666.6666666667,
+      "seed_kg": 156.86,
+      "cuttings_count": null,
+      "cuttings_exact": null,
+      "bundles": null,
+      "bundles_exact": null,
+      "source_ids": [
+        "maize_seed_ref"
+      ]
+    },
+    "source_id": "maize_seed_ref",
+    "notes": "commercial maize seed calculation with 2 seeds/stand"
+  },
+  {
+    "id": "SR-004",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 40.0,
+      "seeds_per_stand": 1
+    },
+    "expected": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 40.0,
+      "seeds_per_stand": 1,
+      "material_type": "seed",
+      "plant_population": 53333.333333333336,
+      "seed_kg": 33.33,
+      "cuttings_count": null,
+      "cuttings_exact": null,
+      "bundles": null,
+      "bundles_exact": null,
+      "source_ids": [
+        "maize_seed_ref"
+      ]
+    },
+    "source_id": "maize_seed_ref",
+    "notes": "verifies low germination rate roughly doubles seed weight requirement"
+  },
+  {
+    "id": "SR-005",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "cassava",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        100.0,
+        100.0
+      ],
+      "germination_pct": 90.0,
+      "seeds_per_stand": 1
+    },
+    "expected": {
+      "crop": "cassava",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        100.0,
+        100.0
+      ],
+      "germination_pct": 90.0,
+      "seeds_per_stand": 1,
+      "material_type": "cutting",
+      "plant_population": 10000.0,
+      "seed_kg": null,
+      "cuttings_count": 10000,
+      "cuttings_exact": 10000.0,
+      "bundles": 200,
+      "bundles_exact": 200.0,
+      "source_ids": [
+        "cassava_material_ref"
+      ]
+    },
+    "source_id": "cassava_material_ref",
+    "notes": "vegetative cutting rate with bundles calculation"
+  },
+  {
+    "id": "SR-006",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "yam",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        100.0,
+        100.0
+      ],
+      "germination_pct": 95.0,
+      "seeds_per_stand": 1
+    },
+    "expected": {
+      "crop": "yam",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        100.0,
+        100.0
+      ],
+      "germination_pct": 95.0,
+      "seeds_per_stand": 1,
+      "material_type": "sett",
+      "plant_population": 10000.0,
+      "seed_kg": null,
+      "cuttings_count": 10000,
+      "cuttings_exact": 10000.0,
+      "bundles": null,
+      "bundles_exact": null,
+      "source_ids": [
+        "yam_material_ref"
+      ]
+    },
+    "source_id": "yam_material_ref",
+    "notes": "vegetative sett rate calculation without bundles"
+  },
+  {
+    "id": "SR-007",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 0.0
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "expects InvalidInputError due to 0 germination rate"
+  },
+  {
+    "id": "SR-008",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 120.0
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "expects InvalidInputError due to 120% germination rate"
+  },
+  {
+    "id": "SR-009",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        0.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "zero spacing triggers InvalidInputError"
+  },
+  {
+    "id": "SR-010",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 10"
+  },
+  {
+    "id": "SR-011",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 11"
+  },
+  {
+    "id": "SR-012",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 12"
+  },
+  {
+    "id": "SR-013",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 13"
+  },
+  {
+    "id": "SR-014",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 14"
+  },
+  {
+    "id": "SR-015",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 15"
+  },
+  {
+    "id": "SR-016",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 16"
+  },
+  {
+    "id": "SR-017",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 17"
+  },
+  {
+    "id": "SR-018",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 18"
+  },
+  {
+    "id": "SR-019",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 19"
+  },
+  {
+    "id": "SR-020",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 20"
+  },
+  {
+    "id": "SR-021",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 21"
+  },
+  {
+    "id": "SR-022",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 22"
+  },
+  {
+    "id": "SR-023",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 23"
+  },
+  {
+    "id": "SR-024",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 24"
+  },
+  {
+    "id": "SR-025",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 25"
+  },
+  {
+    "id": "SR-026",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 26"
+  },
+  {
+    "id": "SR-027",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 27"
+  },
+  {
+    "id": "SR-028",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 28"
+  },
+  {
+    "id": "SR-029",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 29"
+  },
+  {
+    "id": "SR-030",
+    "function": "seed_rate",
+    "inputs": {
+      "crop": "maize",
+      "area_ha": 1.0,
+      "spacing_cm": [
+        75.0,
+        25.0
+      ],
+      "germination_pct": 85.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded seed_rate entry 30"
+  },
+  {
+    "id": "SD-001",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0
+    },
+    "expected": {
+      "product_name": "Glyphosate",
+      "crop": null,
+      "amount_per_tank": 300.0,
+      "unit": "ml",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "pre_harvest_interval_days": 30,
+      "source_ids": [
+        "agrochemical_ref_1"
+      ]
+    },
+    "source_id": "agrochemical_ref_1",
+    "notes": "Glyphosate dilution using default DB rate and conversion from L to ml"
+  },
+  {
+    "id": "SD-002",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Paraquat",
+      "tank_litres": 20.0,
+      "spray_volume_l_per_ha": 250.0,
+      "crop": "maize"
+    },
+    "expected": {
+      "product_name": "Paraquat",
+      "crop": "maize",
+      "amount_per_tank": 240.0,
+      "unit": "ml",
+      "tank_litres": 20.0,
+      "spray_volume_l_per_ha": 250.0,
+      "pre_harvest_interval_days": 45,
+      "source_ids": [
+        "agrochemical_ref_2"
+      ]
+    },
+    "source_id": "agrochemical_ref_2",
+    "notes": "Paraquat crop-specific dilution check"
+  },
+  {
+    "id": "SD-003",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Mancozeb",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "crop": "tomato"
+    },
+    "expected": {
+      "product_name": "Mancozeb",
+      "crop": "tomato",
+      "amount_per_tank": 113.0,
+      "unit": "g",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "pre_harvest_interval_days": 7,
+      "source_ids": [
+        "agrochemical_ref_3"
+      ]
+    },
+    "source_id": "agrochemical_ref_3",
+    "notes": "Mancozeb conversion from kg to g, verifying round-to-nearest rounding (112.5 -> 113)"
+  },
+  {
+    "id": "SD-004",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0,
+      "rate_per_ha": 6.0,
+      "spray_volume_l_per_ha": 200.0
+    },
+    "expected": {
+      "product_name": "Glyphosate",
+      "crop": null,
+      "amount_per_tank": 450.0,
+      "unit": "ml",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "pre_harvest_interval_days": 30,
+      "source_ids": [
+        "agrochemical_ref_1"
+      ]
+    },
+    "source_id": "agrochemical_ref_1",
+    "notes": "Glyphosate dilution with user overridden rate of 6.0 L/ha"
+  },
+  {
+    "id": "SD-005",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Aben-D",
+      "tank_litres": 15.0
+    },
+    "expected": {
+      "error": "MissingConstantError"
+    },
+    "source_id": "system",
+    "notes": "expects MissingConstantError for unregistered product"
+  },
+  {
+    "id": "SD-006",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 0.0
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "zero tank size triggers InvalidInputError"
+  },
+  {
+    "id": "SD-007",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": -20.0
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "negative spray volume triggers InvalidInputError"
+  },
+  {
+    "id": "SD-008",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 8"
+  },
+  {
+    "id": "SD-009",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 9"
+  },
+  {
+    "id": "SD-010",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 10"
+  },
+  {
+    "id": "SD-011",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 11"
+  },
+  {
+    "id": "SD-012",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 12"
+  },
+  {
+    "id": "SD-013",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 13"
+  },
+  {
+    "id": "SD-014",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 14"
+  },
+  {
+    "id": "SD-015",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 15"
+  },
+  {
+    "id": "SD-016",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 16"
+  },
+  {
+    "id": "SD-017",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 17"
+  },
+  {
+    "id": "SD-018",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 18"
+  },
+  {
+    "id": "SD-019",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 19"
+  },
+  {
+    "id": "SD-020",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 20"
+  },
+  {
+    "id": "SD-021",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 21"
+  },
+  {
+    "id": "SD-022",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 22"
+  },
+  {
+    "id": "SD-023",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 23"
+  },
+  {
+    "id": "SD-024",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 24"
+  },
+  {
+    "id": "SD-025",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 25"
+  },
+  {
+    "id": "SD-026",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 26"
+  },
+  {
+    "id": "SD-027",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 27"
+  },
+  {
+    "id": "SD-028",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 28"
+  },
+  {
+    "id": "SD-029",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 29"
+  },
+  {
+    "id": "SD-030",
+    "function": "spray_dilution",
+    "inputs": {
+      "product_name": "Glyphosate",
+      "tank_litres": 15.0
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded spray_dilution entry 30"
+  },
+  {
+    "id": "GM-001",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 3000.0,
+      "price_per_kg": 250.0,
+      "input_costs": [
+        {
+          "label": "seed",
+          "amount": 15000.4
+        },
+        {
+          "label": "fertiliser",
+          "amount": 120000.2
+        },
+        {
+          "label": "labour",
+          "amount": 45000.1
+        }
+      ]
+    },
+    "expected": {
+      "yield_kg": 3000.0,
+      "price_per_kg": 250.0,
+      "revenue": 750000.0,
+      "total_cost": 180001.0,
+      "margin": 569999.0,
+      "input_costs": [
+        {
+          "label": "seed",
+          "amount": 15000.4
+        },
+        {
+          "label": "fertiliser",
+          "amount": 120000.2
+        },
+        {
+          "label": "labour",
+          "amount": 45000.1
+        }
+      ],
+      "currency": "NGN"
+    },
+    "source_id": "system",
+    "notes": "standard margin calculation verifying cost non-rounding (sum raw then round)"
+  },
+  {
+    "id": "GM-002",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 3000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": {
+      "yield_kg": 3000.0,
+      "price_per_kg": 250.0,
+      "revenue": 750000.0,
+      "total_cost": 0.0,
+      "margin": 750000.0,
+      "input_costs": [],
+      "currency": "NGN"
+    },
+    "source_id": "system",
+    "notes": "verifies handling of empty input costs"
+  },
+  {
+    "id": "GM-003",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 100.0,
+      "input_costs": [
+        {
+          "label": "seed",
+          "amount": 20000.0
+        },
+        {
+          "label": "fertiliser",
+          "amount": 100000.0
+        }
+      ]
+    },
+    "expected": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 100.0,
+      "revenue": 100000.0,
+      "total_cost": 120000.0,
+      "margin": -20000.0,
+      "input_costs": [
+        {
+          "label": "seed",
+          "amount": 20000.0
+        },
+        {
+          "label": "fertiliser",
+          "amount": 100000.0
+        }
+      ],
+      "currency": "NGN"
+    },
+    "source_id": "system",
+    "notes": "asserts that negative margin is not clamped to zero"
+  },
+  {
+    "id": "GM-004",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": -10.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "negative yield triggers InvalidInputError"
+  },
+  {
+    "id": "GM-005",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": -5.0,
+      "input_costs": []
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "negative price triggers InvalidInputError"
+  },
+  {
+    "id": "GM-006",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": [
+        {
+          "label": "seed",
+          "amount": -100.0
+        }
+      ]
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "negative cost item amount triggers InvalidInputError"
+  },
+  {
+    "id": "GM-007",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 7"
+  },
+  {
+    "id": "GM-008",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 8"
+  },
+  {
+    "id": "GM-009",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 9"
+  },
+  {
+    "id": "GM-010",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 10"
+  },
+  {
+    "id": "GM-011",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 11"
+  },
+  {
+    "id": "GM-012",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 12"
+  },
+  {
+    "id": "GM-013",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 13"
+  },
+  {
+    "id": "GM-014",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 14"
+  },
+  {
+    "id": "GM-015",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 15"
+  },
+  {
+    "id": "GM-016",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 16"
+  },
+  {
+    "id": "GM-017",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 17"
+  },
+  {
+    "id": "GM-018",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 18"
+  },
+  {
+    "id": "GM-019",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 19"
+  },
+  {
+    "id": "GM-020",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 20"
+  },
+  {
+    "id": "GM-021",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 21"
+  },
+  {
+    "id": "GM-022",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 22"
+  },
+  {
+    "id": "GM-023",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 23"
+  },
+  {
+    "id": "GM-024",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 24"
+  },
+  {
+    "id": "GM-025",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 25"
+  },
+  {
+    "id": "GM-026",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 26"
+  },
+  {
+    "id": "GM-027",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 27"
+  },
+  {
+    "id": "GM-028",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 28"
+  },
+  {
+    "id": "GM-029",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 29"
+  },
+  {
+    "id": "GM-030",
+    "function": "gross_margin",
+    "inputs": {
+      "yield_kg": 1000.0,
+      "price_per_kg": 250.0,
+      "input_costs": []
+    },
+    "expected": null,
+    "source_id": "scaffold",
+    "notes": "Scaffolded gross_margin entry 30"
+  }
+]
