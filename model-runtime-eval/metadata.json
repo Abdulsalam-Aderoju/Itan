@@ -1,0 +1,37 @@
+{
+  "team_id": "TODO-fill-in-your-registered-team-id",
+  "domain": "agriculture",
+  "language_scope": ["en", "yo", "ha", "pcm"],
+  "african_alpha_claim": true,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "Muritala Mujeebat",
+    "email": "murrymujjy@gmail.com",
+    "github_handle": "TODO-your-github-handle"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "agriculture",
+    "load_bearing": true,
+    "description": "Offline plant pest and disease diagnosis: a structured pest knowledge base (6,100+ rows) plus a NAFDAC agrochemical register grounds every diagnosis in a verified, legally registered treatment rather than model recall, targeting extension agents and farmers in the field with zero connectivity."
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "tp_001",
+      "prompt": "My maize leaves have ragged holes and there is sawdust-like frass in the whorl. What pest is this, and what NAFDAC-registered treatment should I use?"
+    },
+    {
+      "prompt_id": "tp_002",
+      "prompt": "My maize get plenty small holes for the stem and the plant dey fall down anyhow. Wetin be the problem and how I fit treat am?"
+    }
+  ],
+  "model": {
+    "name": "Qwen2.5-1.5B-Instruct-Q4_K_M",
+    "runtime": "llama.cpp",
+    "quantization": "GGUF Q4_K_M",
+    "parameters_estimate": "1.5B",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "model/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+  }
+}
