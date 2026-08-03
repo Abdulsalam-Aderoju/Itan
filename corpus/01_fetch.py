@@ -111,11 +111,19 @@ def main():
             continue
 
         content = resp.content
-        # If we expected a PDF but didn't get one (e.g. redirected to an HTML
-        # landing/paywall page), fall back to saving it as HTML instead of
-        # silently mislabeling a landing page as a PDF.
-        if ext == ".pdf" and not is_pdf_bytes(content):
-            ext = ".html"
+        # The manifest's declared format is only a guess (e.g. every OpenAlex
+        # row defaults to HTML regardless of what the URL actually serves) --
+        # sniff the real bytes and correct the extension in EITHER direction
+        # rather than trusting `fmt`. Originally this only guarded PDF ->
+        # HTML (redirected to a landing/paywall page); the missing HTML ->
+        # PDF direction let 154 sources that really were PDFs get saved with
+        # a .html extension, which then sent them through 02_extract.py's
+        # BeautifulSoup path -- decoding raw PDF binary as UTF-8 text
+        # produces garbage that still contains literal PDF-syntax fragments
+        # (found via corpus/chunks.parquet: 8,517 chunks/154 docs affected).
+        actual_ext = ".pdf" if is_pdf_bytes(content) else ".html"
+        if actual_ext != ext:
+            ext = actual_ext
             file_path = publisher_dir / f"{base_name}{ext}"
 
         try:

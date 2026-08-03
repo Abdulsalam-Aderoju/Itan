@@ -230,7 +230,15 @@ def main():
             updated_rows.append(row)
         else:
             try:
-                if file_path.suffix.lower() == ".pdf":
+                # Dispatch on actual file content, not the extension --
+                # 01_fetch.py's declared format was only ever a guess (every
+                # OpenAlex row defaults to HTML regardless of what the URL
+                # serves), and 154 sources already on disk are real PDFs
+                # saved with a .html extension from before that was fixed.
+                # Sniffing here self-heals them without needing a rename.
+                with open(file_path, "rb") as fh:
+                    is_pdf = fh.read(5) == b"%PDF-"
+                if is_pdf:
                     text, garbage_pages = extract_pdf(file_path)
                 else:
                     text, garbage_pages = extract_html(file_path), 0
