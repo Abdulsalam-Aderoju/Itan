@@ -32,7 +32,7 @@ raw sources -- you shouldn't need it, see below.)
 **2. Corpus data (from Google Drive, not this repo)**
 
 The built corpus artifacts are too large for git and are gitignored. Download them from
-the shared Drive folder: **`<TODO: paste the Google Drive link here>`**
+the shared Drive folder: **`<https://drive.google.com/drive/folders/1KCH-jZkewJHmSrmdTEkvHrXMNwx7V-RN>`**
 
 Place them at these exact paths (matching what `corpus/.gitignore` excludes):
 ```
