@@ -188,6 +188,7 @@ def run_tests():
                     rate_per_ha=inputs.get("rate_per_ha"),
                     spray_volume_l_per_ha=inputs.get("spray_volume_l_per_ha", 200.0),
                     crop=inputs.get("crop"),
+                    conc_pct=inputs.get("conc_pct"),
                 )
                 result_dict = result.to_dict()
             elif func_name == "gross_margin":

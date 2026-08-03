@@ -23,6 +23,8 @@ class SprayDilutionResult:
     spray_volume_l_per_ha: float
     pre_harvest_interval_days: int
     source_ids: list[str]
+    conc_pct: float | None = None                    # active-ingredient % supplied by caller, if any
+    active_ingredient_per_tank: float | None = None   # amount_per_tank's a.i. share, same unit; None if conc_pct not given
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the result to a JSON-serializable dictionary."""
@@ -35,6 +37,8 @@ class SprayDilutionResult:
             "spray_volume_l_per_ha": self.spray_volume_l_per_ha,
             "pre_harvest_interval_days": self.pre_harvest_interval_days,
             "source_ids": self.source_ids,
+            "conc_pct": self.conc_pct,
+            "active_ingredient_per_tank": self.active_ingredient_per_tank,
         }
 
 def spray_dilution(
@@ -43,6 +47,7 @@ def spray_dilution(
     rate_per_ha: float | None = None,
     spray_volume_l_per_ha: float = 200.0,
     crop: str | None = None,
+    conc_pct: float | None = None,
 ) -> SprayDilutionResult:
     """Calculate agrochemical dilution per tank.
 
@@ -51,6 +56,17 @@ def spray_dilution(
 
     If rate_per_ha unit is kg or L, converts to g or ml respectively.
     Reads from `agrochemical` SQLite table.
+
+    conc_pct (blueprint Section 5.1's required parameter) is the product's
+    declared active-ingredient concentration, e.g. a label reading "glyphosate
+    41% SL" is conc_pct=41. rate_per_ha in this corpus is already a
+    formulated-product rate (confirmed against every populated agrochemical
+    row and the existing SD-001..004 gold cases, all in L/ha or kg/ha of
+    product, never a.i.-per-ha), so conc_pct does not change amount_per_tank
+    -- it is used only to additionally report how much of that amount is
+    pure active ingredient (active_ingredient_per_tank), which is what a
+    label's "% a.i." figure is actually for. When omitted, behaviour and
+    output are unchanged from before this parameter existed.
     """
     # 1. Validation
     if not product_name:
@@ -61,6 +77,8 @@ def spray_dilution(
         raise InvalidInputError(f"Spray volume per hectare must be greater than zero. Received: {spray_volume_l_per_ha}")
     if rate_per_ha is not None and rate_per_ha <= 0:
         raise InvalidInputError(f"User-overridden rate per hectare must be greater than zero. Received: {rate_per_ha}")
+    if conc_pct is not None and not (0 < conc_pct <= 100):
+        raise InvalidInputError(f"Concentration percent must be between 0 and 100. Received: {conc_pct}")
 
     conn = get_connection()
     try:
@@ -129,6 +147,12 @@ def spray_dilution(
         # Apply dilution rounding policy
         amount_per_tank = float(round_dilution(amount_raw))
 
+        # Optional: how much of amount_per_tank is active ingredient
+        active_ingredient_per_tank = (
+            float(round_dilution(amount_per_tank * (conc_pct / 100.0)))
+            if conc_pct is not None else None
+        )
+
         # Crop is recorded as the matched crop in the DB (or input crop)
         result_crop = matched_row['crop'] if matched_row['crop'] else crop
 
@@ -141,6 +165,8 @@ def spray_dilution(
             spray_volume_l_per_ha=spray_volume_l_per_ha,
             pre_harvest_interval_days=phi,
             source_ids=[source_id],
+            conc_pct=conc_pct,
+            active_ingredient_per_tank=active_ingredient_per_tank,
         )
 
     finally:

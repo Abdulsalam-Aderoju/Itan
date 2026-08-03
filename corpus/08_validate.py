@@ -259,8 +259,13 @@ def is_hit(chunk_ids: list[str], df: pd.DataFrame, question: dict) -> bool:
             continue
         row = df.loc[cid]
         crops = str(row.get("crops", "")).split(";")
-        topic = row.get("topic", "")
-        if question["crop"] in crops and topic == question["expected_topic"]:
+        # `topics` (multi-label, semicolon-joined, mirrors `crops`) replaces
+        # the old single-label `topic` here: a chunk spanning more than one
+        # TOPIC_KEYWORDS subject (common -- e.g. a "4.1 Threshing" / "4.2
+        # Storage" pair in the same packed chunk) can legitimately match more
+        # than one expected_topic. See corpus/04_chunk.py's classify_topics().
+        topics = str(row.get("topics", "")).split(";")
+        if question["crop"] in crops and question["expected_topic"] in topics:
             return True
     return False
 

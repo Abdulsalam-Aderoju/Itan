@@ -38,6 +38,8 @@ Calculates chemical dilution rates for knapsack sprayers. It reads recommendatio
 $$\text{Amount per tank} = \text{Application rate per ha} \times \frac{\text{Tank volume (L)}}{\text{Spray volume per ha (L)}}$$
 If the database rate unit is `kg` or `L`, it multiplies the output by 1000 to convert to grams (`g`) or milliliters (`ml`) respectively to match measuring-cup precision.
 
+**`conc_pct`** (optional, matches the blueprint's Section 5.1 signature): the product's declared active-ingredient concentration, e.g. a label reading "glyphosate 41% SL" is `conc_pct=41`. Every populated `agrochemical` row in this corpus stores `rate_per_ha` as a formulated-**product** rate (L/ha or kg/ha of product, never a.i.-per-ha), so `conc_pct` does not change `amount_per_tank` — it only adds `active_ingredient_per_tank = amount_per_tank * conc_pct / 100`, the amount of pure active ingredient within that tank dose. Omit it and output is unchanged (`conc_pct`/`active_ingredient_per_tank` both `None`).
+
 ### 4. gross_margin
 Performs a financial analysis based on yield and price. To prevent rounding error accumulation, cost item details are kept as unrounded floats, and rounding is applied only to the final aggregates:
 $$\text{Revenue} = \text{Yield (kg)} \times \text{Price per kg}$$

@@ -69,14 +69,41 @@ def table_to_markdown(table: list[list]) -> str:
     return "\n".join(lines)
 
 
-def extract_pdf(path: Path) -> str:
+# Literal tokens from PDF internal syntax (compressed object streams, font
+# definitions, annotation objects) -- these are effectively impossible in
+# genuine extracted agricultural-extension prose, so their presence means
+# pdfplumber silently returned raw PDF bytes instead of decoded text rather
+# than raising an exception.
+GARBAGE_PDF_MARKERS = ("endobj", "endstream", "FlateDecode", "/CharSet(", "/FontBBox[")
+
+
+def is_garbage_pdf_text(text: str) -> bool:
+    return any(marker in text for marker in GARBAGE_PDF_MARKERS)
+
+
+def extract_pdf(path: Path) -> tuple[str, int]:
     parts = []
+    garbage_pages = 0
     with pdfplumber.open(path) as pdf:
         for i, page in enumerate(pdf.pages, start=1):
             parts.append(f"\n\n[[PAGE:{i}]]\n\n")
             try:
                 text = page.extract_text() or ""
             except Exception:
+                text = ""
+            # pdfplumber doesn't always raise when a page's font/encoding
+            # can't be decoded properly -- on some PDFs it silently returns
+            # the raw PDF object-stream bytes instead (font definitions,
+            # compressed stream data, annotation objects) as if it were
+            # real text. That garbage is unmistakable -- these literal
+            # tokens are part of PDF syntax itself and effectively never
+            # appear in genuine extracted prose -- so a page containing any
+            # of them is dropped exactly like a page that raised an
+            # exception, rather than silently polluting the corpus. Found
+            # via corpus/chunks.parquet: 8,517 chunks (5% of the corpus)
+            # across 154 documents carried this before the check existed.
+            if is_garbage_pdf_text(text):
+                garbage_pages += 1
                 text = ""
             parts.append(text)
 
@@ -88,7 +115,7 @@ def extract_pdf(path: Path) -> str:
                 md = table_to_markdown(table)
                 if md:
                     parts.append(f"\n\n[[TABLE_START]]\n{md}\n[[TABLE_END]]\n\n")
-    return "".join(parts)
+    return "".join(parts), garbage_pages
 
 
 def extract_html(path: Path) -> str:
@@ -180,6 +207,7 @@ def main():
     total = len(rows)
     print(f"[extract] {total} sources to process")
     ok, failed, skipped = 0, 0, 0
+    garbage_docs, garbage_pages_total = 0, 0
     updated_rows = []
     start_time = time.time()
 
@@ -203,13 +231,18 @@ def main():
         else:
             try:
                 if file_path.suffix.lower() == ".pdf":
-                    text = extract_pdf(file_path)
+                    text, garbage_pages = extract_pdf(file_path)
                 else:
-                    text = extract_html(file_path)
+                    text, garbage_pages = extract_html(file_path), 0
                 out_path.write_text(text, encoding="utf-8")
                 row["has_tables"] = str(has_table_markers(text))
                 ok += 1
-                progress_line("extract", i, total, fname, ok=True)
+                if garbage_pages:
+                    garbage_docs += 1
+                    garbage_pages_total += garbage_pages
+                    progress_line("extract", i, total, fname, ok=True, reason=f"{garbage_pages} garbage page(s) dropped")
+                else:
+                    progress_line("extract", i, total, fname, ok=True)
             except Exception as exc:
                 with open(ERROR_LOG, "a", encoding="utf-8") as elog:
                     elog.write(f"{sid}: {file_path} :: {exc}\n{traceback.format_exc()}\n")
@@ -228,6 +261,9 @@ def main():
             writer.writerows(updated_rows)
 
     print(f"\n[extract] DONE. ok={ok} failed={failed} skipped_already_extracted={skipped}")
+    if garbage_docs:
+        print(f"[extract] {garbage_pages_total} garbage page(s) dropped across {garbage_docs} document(s) "
+              f"(pdfplumber returned raw PDF-structure bytes instead of text -- see is_garbage_pdf_text())")
     print(f"[extract] Text output: {RAW_TEXT_DIR}")
     if failed:
         print(f"[extract] Failures logged to {ERROR_LOG}")

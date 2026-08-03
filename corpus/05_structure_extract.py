@@ -30,6 +30,20 @@ DB_PATH = CORPUS_DIR / "structured.db"
 MONTHS = ["january", "february", "march", "april", "may", "june", "july",
           "august", "september", "october", "november", "december"]
 MONTH_RE_FRAG = "|".join(MONTHS)
+# A month name, optionally preceded by "early/late/mid" and/or followed by
+# a day-of-month number ("January 15", "5th March") -- extension prose and
+# academic papers routinely give exact planting/harvest dates this way,
+# not just bare month names. One capture group: the month name itself.
+MONTH_WITH_DAY = (
+    rf"(?:\d{{1,2}}(?:st|nd|rd|th)?\s+)?"
+    rf"(?:early|late|mid[\s-]?|(?:first|second|third|fourth|last)\s+week\s+of\s*)?\s*"
+    rf"({MONTH_RE_FRAG})(?:\s+\d{{1,2}}(?:st|nd|rd|th)?)?"
+)
+# Up to 4 words of gap (never crossing a period, so it can't bridge two
+# sentences) between an activity verb and "between" -- covers "plant
+# soybean between", "planting date was the first day between", etc.,
+# without needing to enumerate every phrasing by hand.
+WORD_GAP = r"(?:\s+[^\s.]+){0,4}?"
 
 NIGERIAN_STATES = [
     "abia", "adamawa", "akwa ibom", "anambra", "bauchi", "bayelsa", "benue", "borno",
@@ -59,6 +73,49 @@ TIGHT_OVERRIDE_DISTANCE = 60  # a mention this close overrides the doc's primary
 # still wins, since that tight a match usually means the sentence really is
 # about that other crop (e.g. a per-crop rate table row).
 _DOC_CROPS: set[str] = set()
+
+# Minimum total mentions, and minimum lead over the runner-up crop, before
+# infer_doc_crop() below trusts a content-derived single-crop guess.
+# 20 is not arbitrary: checked mention counts across every document this
+# fallback fired on -- every correct single-crop attribution had 37-317
+# mentions of the winning crop, but the one false positive found (a
+# "Potato Research" journal paper mentioning "maize" only in passing as a
+# rotation crop, 367 "potato" mentions vs 12 "maize") had just 12. 20 sits
+# in the gap between those two clusters. CROPS only lists the 10 target
+# crops, so this fallback has no way to know a document's TRUE subject is
+# a non-target crop like potato that outnumbers every target-crop mention
+# -- the high absolute floor is what keeps a passing mention of a target
+# crop in an off-topic paper from winning by default.
+DOC_CROP_MIN_MENTIONS = 20
+DOC_CROP_MIN_LEAD_RATIO = 3
+
+
+def infer_doc_crop(text: str) -> set[str]:
+    """Fallback for when sources.csv's crops_covered is empty -- true for
+    most of this corpus, since that field is only populated from filename
+    matching (common for hand-named extension guides, essentially never
+    for the DOI-named academic papers OpenAlex/Semantic Scholar make up
+    the bulk of the corpus). Scans the whole document for crop-name
+    mentions and, if exactly one crop clearly dominates, returns it as a
+    single-element set so it flows into the same _DOC_CROPS single-crop-
+    document contract find_window_crop() already trusts -- just derived
+    from content instead of the filename. Deliberately conservative (a
+    real minimum mention count, not just "most mentions of at least one")
+    so a comparative multi-crop study, where several crops are mentioned
+    at similar rates, correctly stays ambiguous (empty set) instead of
+    getting attributed to whichever crop happens to be named first."""
+    lower = text.lower()
+    counts = {c: len(re.findall(rf"\b{re.escape(c)}\b", lower)) for c in CROPS}
+    nonzero = {c: n for c, n in counts.items() if n > 0}
+    if not nonzero:
+        return set()
+    top_crop, top_count = max(nonzero.items(), key=lambda kv: kv[1])
+    if top_count < DOC_CROP_MIN_MENTIONS:
+        return set()
+    runner_up = max((n for c, n in nonzero.items() if c != top_crop), default=0)
+    if runner_up * DOC_CROP_MIN_LEAD_RATIO <= top_count:
+        return {top_crop}
+    return set()
 
 
 def _crop_distances(text: str, pos: int, window: int) -> dict[str, int]:
@@ -133,12 +190,60 @@ def make_conf(has_crop: bool, has_place: bool, strict_pattern: bool) -> float:
 # added by caller) for one document's cleaned text.
 # ---------------------------------------------------------------------------
 
+def _window_pattern(verb_stem: str) -> str:
+    """'[verb] ... between/from X to/and Y', tolerating a few words of gap
+    (crop name, aux verbs, 'date was the first day', etc.) between the verb
+    and the connector -- shared shape for planting_window/harvest_window
+    across every verb stem (plant, sow, harvest) rather than one-off regexes
+    per phrasing. Requires the sentence to actually start with the activity
+    verb, so e.g. a "sow(?:ing)?" pattern does not match an unrelated
+    "harvested between X and Y" sentence a few words later."""
+    return rf"{verb_stem}{WORD_GAP}\s+(?:between|from)\s+{MONTH_WITH_DAY}\s*(?:to|and|-|–)\s*{MONTH_WITH_DAY}"
+
+
 def extract_crop_calendar(text: str) -> list[dict]:
     rows = []
     patterns = [
         (re.compile(rf"plant(?:ing)?\s+in\s+({MONTH_RE_FRAG})", re.I), "plant_in_month", True),
         (re.compile(rf"planting\s+window[:\s]+({MONTH_RE_FRAG})\s*(?:to|-|–)\s*({MONTH_RE_FRAG})", re.I), "planting_window", True),
+        # Extension-guide prose rarely says "planting window: X to Y" -- it
+        # says "planting is carried out between March and May", "farmers
+        # plant soybean between mid-June and July", "the planting date was
+        # the first day between May 1 and June 30". WORD_GAP absorbs the
+        # aux verbs / crop name / filler words between the activity verb
+        # and the connector without needing to enumerate every phrasing by
+        # hand, while still requiring the sentence to actually be about
+        # planting (starts with "plant..."), so it does NOT match a nearby
+        # "land preparation is done between X and Y" sentence about a
+        # different, earlier activity.
+        (re.compile(_window_pattern(r"plant(?:ing)?"), re.I), "planting_window", True),
+        # "Sow/sown/sowing" is the dominant term for planting in academic
+        # papers (far more common than "plant" itself in this corpus) --
+        # "sown in March", "sowing in early July", "Maize was sown in
+        # early October".
+        (re.compile(rf"sow(?:n|ing)?\s+in\s+({MONTH_RE_FRAG})", re.I), "plant_in_month", True),
+        # "Sowing from June 1 to July 5", "sown between March and April",
+        # "Time of sowing: Mid June to July" (table-cell style, no
+        # between/from at all -- just a colon or bare space).
+        (re.compile(_window_pattern(r"sow(?:n|ing)?"), re.I), "planting_window", True),
+        (re.compile(
+            rf"(?:time\s+of\s+)?sow(?:ing)?\s*[:\s]\s*{MONTH_WITH_DAY}\s*(?:to|-|–)\s*{MONTH_WITH_DAY}",
+            re.I,
+        ), "planting_window", True),
         (re.compile(rf"first\s+rains?[:\s]+({MONTH_RE_FRAG})", re.I), "first_rains", True),
+        # "with the first rains from late February to early March" --
+        # same fact as the colon-form above, common phrasing in
+        # land-preparation-timing paragraphs.
+        (re.compile(
+            rf"first\s+rains?\s+from\s+(?:early|late|mid)?\s*({MONTH_RE_FRAG})\s*"
+            rf"(?:to|and|-|–)?\s*(?:early|late|mid)?\s*({MONTH_RE_FRAG})?",
+            re.I,
+        ), "first_rains", True),
+        # Harvest-window extraction did not exist at all before this --
+        # "harvest between March and May" mirrors the planting pattern
+        # above. crop_calendar tool's _best_window() already looks for
+        # this exact activity name.
+        (re.compile(_window_pattern(r"harvest(?:ed|ing)?"), re.I), "harvest_window", True),
     ]
     for regex, activity, strict in patterns:
         for m in regex.finditer(text):
@@ -444,9 +549,18 @@ EXTRACTORS = {
 
 
 def init_db(conn: sqlite3.Connection):
+    # This script always processes every file in CLEAN_DIR on every run (not
+    # just new ones since the last run), so the tables must be rebuilt from
+    # scratch each time -- DROP + CREATE, not CREATE IF NOT EXISTS. Without
+    # this, rerunning on top of an existing structured.db silently duplicates
+    # every already-processed document's rows (found and fixed 2026-08-02:
+    # an earlier double-run had inflated the pest table to ~12,200 rows
+    # before this fix, vs. the true ~6,300 from a single clean pass).
+    for table in SCHEMA:
+        conn.execute(f'DROP TABLE IF EXISTS "{table}"')
     for table, cols in SCHEMA.items():
         col_defs = ", ".join(f'"{c}" TEXT' if c != "confidence" else '"confidence" REAL' for c in cols)
-        conn.execute(f'CREATE TABLE IF NOT EXISTS "{table}" (id INTEGER PRIMARY KEY AUTOINCREMENT, {col_defs})')
+        conn.execute(f'CREATE TABLE "{table}" (id INTEGER PRIMARY KEY AUTOINCREMENT, {col_defs})')
     conn.commit()
 
 
@@ -484,6 +598,8 @@ def main():
         try:
             text = f.read_text(encoding="utf-8", errors="ignore")
             _DOC_CROPS = {c for c in (sources[sid].get("crops_covered") or "").split(";") if c}
+            if not _DOC_CROPS:
+                _DOC_CROPS = infer_doc_crop(text)
 
             doc_row_count = 0
             for table, extractor in EXTRACTORS.items():

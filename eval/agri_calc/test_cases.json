@@ -1201,7 +1201,9 @@
       "pre_harvest_interval_days": 30,
       "source_ids": [
         "agrochemical_ref_1"
-      ]
+      ],
+      "conc_pct": null,
+      "active_ingredient_per_tank": null
     },
     "source_id": "agrochemical_ref_1",
     "notes": "Glyphosate dilution using default DB rate and conversion from L to ml"
@@ -1225,7 +1227,9 @@
       "pre_harvest_interval_days": 45,
       "source_ids": [
         "agrochemical_ref_2"
-      ]
+      ],
+      "conc_pct": null,
+      "active_ingredient_per_tank": null
     },
     "source_id": "agrochemical_ref_2",
     "notes": "Paraquat crop-specific dilution check"
@@ -1249,7 +1253,9 @@
       "pre_harvest_interval_days": 7,
       "source_ids": [
         "agrochemical_ref_3"
-      ]
+      ],
+      "conc_pct": null,
+      "active_ingredient_per_tank": null
     },
     "source_id": "agrochemical_ref_3",
     "notes": "Mancozeb conversion from kg to g, verifying round-to-nearest rounding (112.5 -> 113)"
@@ -1273,7 +1279,9 @@
       "pre_harvest_interval_days": 30,
       "source_ids": [
         "agrochemical_ref_1"
-      ]
+      ],
+      "conc_pct": null,
+      "active_ingredient_per_tank": null
     },
     "source_id": "agrochemical_ref_1",
     "notes": "Glyphosate dilution with user overridden rate of 6.0 L/ha"
@@ -1323,33 +1331,67 @@
     "function": "spray_dilution",
     "inputs": {
       "product_name": "Glyphosate",
-      "tank_litres": 15.0
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "conc_pct": 41.0
     },
-    "expected": null,
-    "source_id": "scaffold",
-    "notes": "Scaffolded spray_dilution entry 8"
+    "expected": {
+      "product_name": "Glyphosate",
+      "crop": null,
+      "amount_per_tank": 300.0,
+      "unit": "ml",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "pre_harvest_interval_days": 30,
+      "source_ids": [
+        "agrochemical_ref_1"
+      ],
+      "conc_pct": 41.0,
+      "active_ingredient_per_tank": 123.0
+    },
+    "source_id": "agrochemical_ref_1",
+    "notes": "conc_pct=41 reports active_ingredient_per_tank (300*0.41=123) without altering amount_per_tank"
   },
   {
     "id": "SD-009",
     "function": "spray_dilution",
     "inputs": {
-      "product_name": "Glyphosate",
-      "tank_litres": 15.0
+      "product_name": "Mancozeb",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "crop": "tomato",
+      "conc_pct": 80.0
     },
-    "expected": null,
-    "source_id": "scaffold",
-    "notes": "Scaffolded spray_dilution entry 9"
+    "expected": {
+      "product_name": "Mancozeb",
+      "crop": "tomato",
+      "amount_per_tank": 113.0,
+      "unit": "g",
+      "tank_litres": 15.0,
+      "spray_volume_l_per_ha": 200.0,
+      "pre_harvest_interval_days": 7,
+      "source_ids": [
+        "agrochemical_ref_3"
+      ],
+      "conc_pct": 80.0,
+      "active_ingredient_per_tank": 90.0
+    },
+    "source_id": "agrochemical_ref_3",
+    "notes": "conc_pct=80 on a 'g' unit product; a.i. share rounds 90.4 -> 90"
   },
   {
     "id": "SD-010",
     "function": "spray_dilution",
     "inputs": {
       "product_name": "Glyphosate",
-      "tank_litres": 15.0
+      "tank_litres": 15.0,
+      "conc_pct": 150.0
     },
-    "expected": null,
-    "source_id": "scaffold",
-    "notes": "Scaffolded spray_dilution entry 10"
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "conc_pct above 100 triggers InvalidInputError"
   },
   {
     "id": "SD-011",

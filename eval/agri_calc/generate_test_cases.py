@@ -591,7 +591,9 @@ def generate():
             "tank_litres": 15.0,
             "spray_volume_l_per_ha": 200.0,
             "pre_harvest_interval_days": 30,
-            "source_ids": ["agrochemical_ref_1"]
+            "source_ids": ["agrochemical_ref_1"],
+            "conc_pct": None,
+            "active_ingredient_per_tank": None
         },
         "source_id": "agrochemical_ref_1",
         "notes": "Glyphosate dilution using default DB rate and conversion from L to ml"
@@ -615,7 +617,9 @@ def generate():
             "tank_litres": 20.0,
             "spray_volume_l_per_ha": 250.0,
             "pre_harvest_interval_days": 45,
-            "source_ids": ["agrochemical_ref_2"]
+            "source_ids": ["agrochemical_ref_2"],
+            "conc_pct": None,
+            "active_ingredient_per_tank": None
         },
         "source_id": "agrochemical_ref_2",
         "notes": "Paraquat crop-specific dilution check"
@@ -639,7 +643,9 @@ def generate():
             "tank_litres": 15.0,
             "spray_volume_l_per_ha": 200.0,
             "pre_harvest_interval_days": 7,
-            "source_ids": ["agrochemical_ref_3"]
+            "source_ids": ["agrochemical_ref_3"],
+            "conc_pct": None,
+            "active_ingredient_per_tank": None
         },
         "source_id": "agrochemical_ref_3",
         "notes": "Mancozeb conversion from kg to g, verifying round-to-nearest rounding (112.5 -> 113)"
@@ -663,7 +669,9 @@ def generate():
             "tank_litres": 15.0,
             "spray_volume_l_per_ha": 200.0,
             "pre_harvest_interval_days": 30,
-            "source_ids": ["agrochemical_ref_1"]
+            "source_ids": ["agrochemical_ref_1"],
+            "conc_pct": None,
+            "active_ingredient_per_tank": None
         },
         "source_id": "agrochemical_ref_1",
         "notes": "Glyphosate dilution with user overridden rate of 6.0 L/ha"
@@ -715,8 +723,78 @@ def generate():
         "notes": "negative spray volume triggers InvalidInputError"
     })
 
-    # SD-008 to SD-030: Add scaffolded entries for spray_dilution
-    for i in range(8, 31):
+    # SD-008: conc_pct supplied (blueprint 5.1 parameter) -> reports active_ingredient_per_tank
+    # without changing amount_per_tank (Glyphosate 41% SL, same DB rate as SD-001: 300 ml/tank)
+    cases.append({
+        "id": "SD-008",
+        "function": "spray_dilution",
+        "inputs": {
+            "product_name": "Glyphosate",
+            "tank_litres": 15.0,
+            "spray_volume_l_per_ha": 200.0,
+            "conc_pct": 41.0
+        },
+        "expected": {
+            "product_name": "Glyphosate",
+            "crop": None,
+            "amount_per_tank": 300.0,
+            "unit": "ml",
+            "tank_litres": 15.0,
+            "spray_volume_l_per_ha": 200.0,
+            "pre_harvest_interval_days": 30,
+            "source_ids": ["agrochemical_ref_1"],
+            "conc_pct": 41.0,
+            "active_ingredient_per_tank": 123.0
+        },
+        "source_id": "agrochemical_ref_1",
+        "notes": "conc_pct=41 reports active_ingredient_per_tank (300*0.41=123) without altering amount_per_tank"
+    })
+
+    # SD-009: conc_pct with a 'g' unit product (Mancozeb 80% WP), verifying rounding of the a.i. share
+    cases.append({
+        "id": "SD-009",
+        "function": "spray_dilution",
+        "inputs": {
+            "product_name": "Mancozeb",
+            "tank_litres": 15.0,
+            "spray_volume_l_per_ha": 200.0,
+            "crop": "tomato",
+            "conc_pct": 80.0
+        },
+        "expected": {
+            "product_name": "Mancozeb",
+            "crop": "tomato",
+            "amount_per_tank": 113.0,
+            "unit": "g",
+            "tank_litres": 15.0,
+            "spray_volume_l_per_ha": 200.0,
+            "pre_harvest_interval_days": 7,
+            "source_ids": ["agrochemical_ref_3"],
+            "conc_pct": 80.0,
+            "active_ingredient_per_tank": 90.0
+        },
+        "source_id": "agrochemical_ref_3",
+        "notes": "conc_pct=80 on a 'g' unit product; a.i. share rounds 90.4 -> 90"
+    })
+
+    # SD-010: conc_pct out of (0, 100] range (InvalidInputError)
+    cases.append({
+        "id": "SD-010",
+        "function": "spray_dilution",
+        "inputs": {
+            "product_name": "Glyphosate",
+            "tank_litres": 15.0,
+            "conc_pct": 150.0
+        },
+        "expected": {
+            "error": "InvalidInputError"
+        },
+        "source_id": "system",
+        "notes": "conc_pct above 100 triggers InvalidInputError"
+    })
+
+    # SD-011 to SD-030: Add scaffolded entries for spray_dilution
+    for i in range(11, 31):
         cases.append({
             "id": f"SD-{i:03d}",
             "function": "spray_dilution",

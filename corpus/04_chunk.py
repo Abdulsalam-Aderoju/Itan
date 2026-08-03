@@ -54,8 +54,8 @@ LIST_ITEM_RE = re.compile(r"^(\d+[.)]|\(\d+\)|[-*•])\s+\S")
 
 TOPIC_KEYWORDS = {
     "planting": ["planting", "sowing", "seed rate", "planting date", "transplanting", "nursery", "seedbed"],
-    "fertilisation": ["fertiliser", "fertilizer", "npk", "urea", "manure", "basal dressing", "top dress", "nutrient"],
-    "pest_management": ["pest", "insect", "infestation", "insecticide", "weevil", "borer", "aphid"],
+    "fertilisation": ["fertiliser", "fertilizer", "npk", "urea", "manure", "basal dressing", "top dress", "nutrient", "nitrogen"],
+    "pest_management": ["pest", "insect", "infestation", "insecticide", "weevil", "borer", "aphid", "striga", "parasitic weed"],
     "disease_management": ["disease", "fungus", "fungicide", "blight", "wilt", "rot", "virus", "pathogen"],
     "harvest": ["harvest", "harvesting", "maturity", "threshing", "reaping"],
     "storage": ["storage", "storing", "warehouse", "silo", "post-harvest loss", "drying"],
@@ -192,14 +192,61 @@ def pack_units(units: list[dict]) -> list[dict]:
     return merged
 
 
-def classify_topic(text: str) -> str:
+TOPIC_INCLUDE_MIN_RATIO = 0.5   # a secondary topic must be at least half as well
+                                  # evidenced (by raw keyword-hit count) as the winner
+TOPIC_INCLUDE_MIN_ABS = 2        # ...and have at least 2 raw keyword hits itself, so a
+                                  # chunk whose winning topic only has 1 hit can never
+                                  # spawn a secondary label from a spurious 1-vs-1 "tie"
+
+
+def classify_topics(text: str) -> tuple[str, str]:
+    """Returns (topic, topics).
+
+    A single ~300-450 token chunk often spans more than one of TOPIC_KEYWORDS'
+    subject areas (e.g. a book chapter chunk covering both a Striga/pest
+    paragraph and general harvest content, or literal adjacent "4.1 Threshing"
+    / "4.2 Storage" subsections in the same packed chunk) -- picking only the
+    single highest-count topic silently discards a real, keyword-supported
+    secondary topic and can make 08_validate.py's strict topic == equality
+    miss a chunk that was correctly retrieved. `topic` keeps the exact old
+    single-winner behaviour (tie-broken by TOPIC_KEYWORDS dict order) for any
+    future single-value use (e.g. a retrieval-layer topic facet). `topics` is
+    a semicolon-joined set -- mirrors the existing `crops`/`zone` convention
+    below -- of every topic within TOPIC_INCLUDE_MIN_RATIO of the winner's
+    count, subject to the TOPIC_INCLUDE_MIN_ABS floor. Both thresholds were
+    picked from corpus-wide percentile breaks in how often a runner-up topic
+    is well-evidenced, not fit to any single example chunk.
+    """
     text_l = text.lower()
-    best_topic, best_count = "unclassified", 0
+    # "post-harvest"/"post harvest" is extremely common phrasing for storage,
+    # drying and post-harvest-loss content -- but as a plain substring it
+    # contains "harvest", which inflated the harvest bucket's count and stole
+    # content that's actually about what happens AFTER harvest (see corpus
+    # validation Q042: a chunk headed "4.2. Storage:" still lost to
+    # "harvest" because "post-harvest handling" appeared twice). Masked out
+    # before counting the harvest bucket only -- other buckets' keywords
+    # don't contain "harvest" as a substring, so they're unaffected.
+    harvest_source = text_l.replace("post-harvest", " ").replace("post harvest", " ")
+    counts = {}
     for topic, keywords in TOPIC_KEYWORDS.items():
-        count = sum(text_l.count(kw) for kw in keywords)
+        source = harvest_source if topic == "harvest" else text_l
+        counts[topic] = sum(source.count(kw) for kw in keywords)
+
+    best_topic, best_count = "unclassified", 0
+    for topic, count in counts.items():
         if count > best_count:
             best_topic, best_count = topic, count
-    return best_topic
+
+    if best_count == 0:
+        return "unclassified", ""
+
+    included = {best_topic}
+    for topic, count in counts.items():
+        if topic == best_topic:
+            continue
+        if count >= TOPIC_INCLUDE_MIN_ABS and count >= TOPIC_INCLUDE_MIN_RATIO * best_count:
+            included.add(topic)
+    return best_topic, ";".join(sorted(included))
 
 
 def main():
@@ -241,6 +288,7 @@ def main():
         for idx, c in enumerate(packed):
             chunk_crops = set(find_crops(c["text"])) | doc_crops
             chunk_zones = find_zones(c["text"]) or doc_zones
+            topic, topics = classify_topics(c["text"])
             all_chunks.append({
                 "chunk_id": f"{sid}_{idx:04d}",
                 "source_id": sid,
@@ -252,7 +300,8 @@ def main():
                 "page_end": c["page_end"],
                 "crops": ";".join(sorted(chunk_crops)) if chunk_crops else "",
                 "zone": ";".join(sorted(chunk_zones)) if chunk_zones else "",
-                "topic": classify_topic(c["text"]),
+                "topic": topic,
+                "topics": topics,
                 "licence": src.get("licence", ""),
                 "is_table": c["is_table"],
                 "token_count": count_tokens(c["text"]),
@@ -276,7 +325,11 @@ def main():
         n = df["crops"].str.contains(crop, na=False).sum()
         print(f"    {crop:12s} {n}")
     print(f"[chunk] Table chunks (never split): {int(df['is_table'].sum())}")
-    print(f"[chunk] Topic distribution:\n{df['topic'].value_counts().to_string()}")
+    print(f"[chunk] Topic distribution (single best label):\n{df['topic'].value_counts().to_string()}")
+    print("[chunk] Per-topic chunk counts (multi-label 'topics' field, a chunk can count toward more than one):")
+    for topic in TOPIC_KEYWORDS:
+        n = df["topics"].str.contains(topic, na=False).sum()
+        print(f"    {topic:20s} {n}")
 
 
 if __name__ == "__main__":
