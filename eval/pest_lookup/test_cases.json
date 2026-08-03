@@ -1,0 +1,497 @@
+[
+  {
+    "id": "PL-001",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "groundnut",
+      "symptom_terms": [
+        "dwarfing"
+      ]
+    },
+    "expected": {
+      "crop": "groundnut",
+      "symptom_terms": [
+        "dwarfing"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "thrips",
+          "symptoms": "Yellowish-green patches on the upper leaf surface, dwarfing and malformation of leaves.",
+          "growth_stage": "seedling",
+          "cultural_control": "",
+          "chemical_control": "Apply approved insecticide at first sign of damage.",
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_count": 5,
+          "source_ids": [
+            "groundnut_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "dwarfing"
+          ]
+        }
+      ]
+    },
+    "source_id": "groundnut_thrips_ref",
+    "notes": "baseline single-term match against the crop-specific record"
+  },
+  {
+    "id": "PL-002",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "groundnut",
+      "symptom_terms": [
+        "yellow"
+      ]
+    },
+    "expected": {
+      "crop": "groundnut",
+      "symptom_terms": [
+        "yellow"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "thrips",
+          "symptoms": "Yellowish-green patches on the upper leaf surface, dwarfing and malformation of leaves.",
+          "growth_stage": "seedling",
+          "cultural_control": "",
+          "chemical_control": "Apply approved insecticide at first sign of damage.",
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_count": 5,
+          "source_ids": [
+            "groundnut_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        },
+        {
+          "pest": "thrips",
+          "symptoms": "General thrips damage across host crops, yellow streaks visible.",
+          "growth_stage": "",
+          "cultural_control": "Remove crop debris after harvest.",
+          "chemical_control": "",
+          "confidence": 0.5,
+          "needs_review": true,
+          "source_count": 2,
+          "source_ids": [
+            "generic_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        }
+      ]
+    },
+    "source_id": "groundnut_thrips_ref",
+    "notes": "tie on match_score broken by confidence descending (0.85 before 0.5)"
+  },
+  {
+    "id": "PL-003",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "maize",
+      "symptom_terms": [
+        "yellow"
+      ]
+    },
+    "expected": {
+      "crop": "maize",
+      "symptom_terms": [
+        "yellow"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "rust",
+          "symptoms": "Orange pustules on the underside of leaves, yellow halo around lesions.",
+          "growth_stage": "vegetative",
+          "cultural_control": "Use resistant varieties.",
+          "chemical_control": "Mancozeb spray at first sign of pustules.",
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_count": 8,
+          "source_ids": [
+            "maize_rust_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        },
+        {
+          "pest": "thrips",
+          "symptoms": "General thrips damage across host crops, yellow streaks visible.",
+          "growth_stage": "",
+          "cultural_control": "Remove crop debris after harvest.",
+          "chemical_control": "",
+          "confidence": 0.5,
+          "needs_review": true,
+          "source_count": 2,
+          "source_ids": [
+            "generic_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        }
+      ]
+    },
+    "source_id": "maize_rust_ref",
+    "notes": "generic (crop=None) records are candidates for every crop query, not just their own"
+  },
+  {
+    "id": "PL-004",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "maize",
+      "symptom_terms": [
+        "wilting",
+        "lesions"
+      ]
+    },
+    "expected": {
+      "crop": "maize",
+      "symptom_terms": [
+        "wilting",
+        "lesions"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "blight",
+          "symptoms": "Grayish-green lesions on leaves, wilting under humid conditions.",
+          "growth_stage": "",
+          "cultural_control": "",
+          "chemical_control": "Copper-based fungicide.",
+          "confidence": 0.6,
+          "needs_review": true,
+          "source_count": 3,
+          "source_ids": [
+            "maize_blight_ref"
+          ],
+          "match_score": 2,
+          "matched_terms": [
+            "wilting",
+            "lesions"
+          ]
+        },
+        {
+          "pest": "rust",
+          "symptoms": "Orange pustules on the underside of leaves, yellow halo around lesions.",
+          "growth_stage": "vegetative",
+          "cultural_control": "Use resistant varieties.",
+          "chemical_control": "Mancozeb spray at first sign of pustules.",
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_count": 8,
+          "source_ids": [
+            "maize_rust_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "lesions"
+          ]
+        }
+      ]
+    },
+    "source_id": "maize_blight_ref",
+    "notes": "match_score (terms matched), not confidence, is the primary sort key"
+  },
+  {
+    "id": "PL-005",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "maize",
+      "symptom_terms": [
+        "nonexistent symptom xyz"
+      ]
+    },
+    "expected": {
+      "crop": "maize",
+      "symptom_terms": [
+        "nonexistent symptom xyz"
+      ],
+      "data_available": false,
+      "matches": []
+    },
+    "source_id": "system",
+    "notes": "zero matches is a legitimate outcome, not InvalidInputError"
+  },
+  {
+    "id": "PL-006",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "banana",
+      "symptom_terms": [
+        "yellow"
+      ]
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "crop outside the 10 target crops is a caller mistake"
+  },
+  {
+    "id": "PL-007",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "",
+      "symptom_terms": [
+        "yellow"
+      ]
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "empty crop name rejected before hitting the DB"
+  },
+  {
+    "id": "PL-008",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "maize",
+      "symptom_terms": []
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "guided triage must supply at least one discriminating term"
+  },
+  {
+    "id": "PL-009",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "maize",
+      "symptom_terms": [
+        "   ",
+        ""
+      ]
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "blank-only terms are stripped and treated as no terms supplied"
+  },
+  {
+    "id": "PL-010",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "MAIZE",
+      "symptom_terms": [
+        "YELLOW"
+      ]
+    },
+    "expected": {
+      "crop": "maize",
+      "symptom_terms": [
+        "yellow"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "rust",
+          "symptoms": "Orange pustules on the underside of leaves, yellow halo around lesions.",
+          "growth_stage": "vegetative",
+          "cultural_control": "Use resistant varieties.",
+          "chemical_control": "Mancozeb spray at first sign of pustules.",
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_count": 8,
+          "source_ids": [
+            "maize_rust_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        },
+        {
+          "pest": "thrips",
+          "symptoms": "General thrips damage across host crops, yellow streaks visible.",
+          "growth_stage": "",
+          "cultural_control": "Remove crop debris after harvest.",
+          "chemical_control": "",
+          "confidence": 0.5,
+          "needs_review": true,
+          "source_count": 2,
+          "source_ids": [
+            "generic_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        }
+      ]
+    },
+    "source_id": "maize_rust_ref",
+    "notes": "uppercase crop and term input are both normalized before matching"
+  },
+  {
+    "id": "PL-011",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "pepper",
+      "symptom_terms": [
+        "yellow"
+      ]
+    },
+    "expected": {
+      "crop": "pepper",
+      "symptom_terms": [
+        "yellow"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "thrips",
+          "symptoms": "General thrips damage across host crops, yellow streaks visible.",
+          "growth_stage": "",
+          "cultural_control": "Remove crop debris after harvest.",
+          "chemical_control": "",
+          "confidence": 0.5,
+          "needs_review": true,
+          "source_count": 2,
+          "source_ids": [
+            "generic_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        }
+      ]
+    },
+    "source_id": "generic_thrips_ref",
+    "notes": "pepper has no crop-specific rows in the seed data, but the generic thrips record still surfaces"
+  },
+  {
+    "id": "PL-012",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "pepper",
+      "symptom_terms": [
+        "nonexistent symptom xyz"
+      ]
+    },
+    "expected": {
+      "crop": "pepper",
+      "symptom_terms": [
+        "nonexistent symptom xyz"
+      ],
+      "data_available": false,
+      "matches": []
+    },
+    "source_id": "system",
+    "notes": "no crop-specific data and no generic match -> empty, not an error"
+  },
+  {
+    "id": "PL-013",
+    "function": "pest_lookup",
+    "inputs": {
+      "crop": "groundnut",
+      "symptom_terms": [
+        "  yellow  "
+      ]
+    },
+    "expected": {
+      "crop": "groundnut",
+      "symptom_terms": [
+        "yellow"
+      ],
+      "data_available": true,
+      "matches": [
+        {
+          "pest": "thrips",
+          "symptoms": "Yellowish-green patches on the upper leaf surface, dwarfing and malformation of leaves.",
+          "growth_stage": "seedling",
+          "cultural_control": "",
+          "chemical_control": "Apply approved insecticide at first sign of damage.",
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_count": 5,
+          "source_ids": [
+            "groundnut_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        },
+        {
+          "pest": "thrips",
+          "symptoms": "General thrips damage across host crops, yellow streaks visible.",
+          "growth_stage": "",
+          "cultural_control": "Remove crop debris after harvest.",
+          "chemical_control": "",
+          "confidence": 0.5,
+          "needs_review": true,
+          "source_count": 2,
+          "source_ids": [
+            "generic_thrips_ref"
+          ],
+          "match_score": 1,
+          "matched_terms": [
+            "yellow"
+          ]
+        }
+      ]
+    },
+    "source_id": "groundnut_thrips_ref",
+    "notes": "leading/trailing whitespace in a symptom term is stripped before matching"
+  },
+  {
+    "id": "PL-014",
+    "function": "pest_lookup_by_name",
+    "inputs": {
+      "pest_name": "thrips",
+      "crop": "groundnut"
+    },
+    "expected": {
+      "pest_name": "thrips",
+      "crop_filter": "groundnut",
+      "data_available": true,
+      "records": [
+        {
+          "crop": "groundnut",
+          "symptoms": "Yellowish-green patches on the upper leaf surface, dwarfing and malformation of leaves.",
+          "growth_stage": "seedling",
+          "cultural_control": "",
+          "chemical_control": "Apply approved insecticide at first sign of damage.",
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_count": 5,
+          "source_ids": [
+            "groundnut_thrips_ref"
+          ]
+        }
+      ]
+    },
+    "source_id": "groundnut_thrips_ref",
+    "notes": "secondary capability retained alongside the blueprint's primary pest_lookup tool"
+  },
+  {
+    "id": "PL-015",
+    "function": "pest_lookup_by_name",
+    "inputs": {
+      "pest_name": "rodent"
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "pest category outside the known keyword vocabulary is a caller mistake"
+  }
+]

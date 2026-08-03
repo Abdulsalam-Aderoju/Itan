@@ -1,0 +1,465 @@
+[
+  {
+    "id": "CC-001",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "maize"
+    },
+    "expected": {
+      "crop": "maize",
+      "agro_zone": null,
+      "year": null,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "June",
+        "end_month": "July",
+        "confidence": 0.9,
+        "needs_review": false,
+        "source_id": "maize_calendar_ref2"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "plant_in_month",
+          "month_start": "May",
+          "month_end": null,
+          "zone": "Northern Guinea Savanna",
+          "state": null,
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref"
+        },
+        {
+          "activity": "planting_window",
+          "month_start": "June",
+          "month_end": "July",
+          "zone": "Sudan Savanna",
+          "state": null,
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref2"
+        }
+      ]
+    },
+    "source_id": "maize_calendar_ref2",
+    "notes": "planting_window (has both months) is preferred over plant_in_month when both exist"
+  },
+  {
+    "id": "CC-002",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "maize",
+      "agro_zone": "Northern Guinea Savanna"
+    },
+    "expected": {
+      "crop": "maize",
+      "agro_zone": "Northern Guinea Savanna",
+      "year": null,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "May",
+        "end_month": null,
+        "confidence": 0.85,
+        "needs_review": false,
+        "source_id": "maize_calendar_ref"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "plant_in_month",
+          "month_start": "May",
+          "month_end": null,
+          "zone": "Northern Guinea Savanna",
+          "state": null,
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref"
+        }
+      ]
+    },
+    "source_id": "maize_calendar_ref",
+    "notes": "with only a plant_in_month row in scope, that becomes the resolved plant_window"
+  },
+  {
+    "id": "CC-003",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "yam"
+    },
+    "expected": {
+      "crop": "yam",
+      "agro_zone": null,
+      "year": null,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "December",
+        "end_month": null,
+        "confidence": 0.85,
+        "needs_review": false,
+        "source_id": "yam_calendar_ref"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "plant_in_month",
+          "month_start": "December",
+          "month_end": null,
+          "zone": null,
+          "state": null,
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_id": "yam_calendar_ref"
+        },
+        {
+          "activity": "first_rains",
+          "month_start": "April",
+          "month_end": null,
+          "zone": null,
+          "state": "benue",
+          "confidence": 0.55,
+          "needs_review": true,
+          "source_id": "yam_calendar_low_conf_ref"
+        }
+      ]
+    },
+    "source_id": "yam_calendar_ref",
+    "notes": "first_rains is a supporting signal in all_signals, not a plant_window source"
+  },
+  {
+    "id": "CC-004",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "yam",
+      "state": "benue"
+    },
+    "expected": {
+      "crop": "yam",
+      "agro_zone": null,
+      "year": null,
+      "state": "benue",
+      "data_available": false,
+      "plant_window": null,
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "first_rains",
+          "month_start": "April",
+          "month_end": null,
+          "zone": null,
+          "state": "benue",
+          "confidence": 0.55,
+          "needs_review": true,
+          "source_id": "yam_calendar_low_conf_ref"
+        }
+      ]
+    },
+    "source_id": "system",
+    "notes": "first_rains-only scope has no plant_window/harvest_window despite all_signals being non-empty"
+  },
+  {
+    "id": "CC-005",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "cassava"
+    },
+    "expected": {
+      "crop": "cassava",
+      "agro_zone": null,
+      "year": null,
+      "state": null,
+      "data_available": false,
+      "plant_window": null,
+      "harvest_window": null,
+      "all_signals": []
+    },
+    "source_id": "system",
+    "notes": "valid crop with no corpus coverage returns empty, not InvalidInputError"
+  },
+  {
+    "id": "CC-006",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "banana"
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "crop outside the 10 target crops is a caller mistake"
+  },
+  {
+    "id": "CC-007",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": ""
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "empty crop name rejected before hitting the DB"
+  },
+  {
+    "id": "CC-008",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "maize",
+      "agro_zone": "Wet Guinea Savanna"
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "zone outside the 6 recognized agro-ecological zones is rejected"
+  },
+  {
+    "id": "CC-009",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "MAIZE"
+    },
+    "expected": {
+      "crop": "maize",
+      "agro_zone": null,
+      "year": null,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "June",
+        "end_month": "July",
+        "confidence": 0.9,
+        "needs_review": false,
+        "source_id": "maize_calendar_ref2"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "plant_in_month",
+          "month_start": "May",
+          "month_end": null,
+          "zone": "Northern Guinea Savanna",
+          "state": null,
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref"
+        },
+        {
+          "activity": "planting_window",
+          "month_start": "June",
+          "month_end": "July",
+          "zone": "Sudan Savanna",
+          "state": null,
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref2"
+        }
+      ]
+    },
+    "source_id": "maize_calendar_ref2",
+    "notes": "uppercase crop input is normalized before lookup"
+  },
+  {
+    "id": "CC-010",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "maize",
+      "agro_zone": "Sudan Savanna"
+    },
+    "expected": {
+      "crop": "maize",
+      "agro_zone": "Sudan Savanna",
+      "year": null,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "June",
+        "end_month": "July",
+        "confidence": 0.9,
+        "needs_review": false,
+        "source_id": "maize_calendar_ref2"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "planting_window",
+          "month_start": "June",
+          "month_end": "July",
+          "zone": "Sudan Savanna",
+          "state": null,
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref2"
+        }
+      ]
+    },
+    "source_id": "maize_calendar_ref2",
+    "notes": "confirms the two seeded maize rows are independently addressable by zone"
+  },
+  {
+    "id": "CC-011",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "sorghum"
+    },
+    "expected": {
+      "crop": "sorghum",
+      "agro_zone": null,
+      "year": null,
+      "state": null,
+      "data_available": false,
+      "plant_window": null,
+      "harvest_window": null,
+      "all_signals": []
+    },
+    "source_id": "system",
+    "notes": "second uncovered crop, confirms CC-005 isn't a one-off"
+  },
+  {
+    "id": "CC-012",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "  yam  "
+    },
+    "expected": {
+      "crop": "yam",
+      "agro_zone": null,
+      "year": null,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "December",
+        "end_month": null,
+        "confidence": 0.85,
+        "needs_review": false,
+        "source_id": "yam_calendar_ref"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "plant_in_month",
+          "month_start": "December",
+          "month_end": null,
+          "zone": null,
+          "state": null,
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_id": "yam_calendar_ref"
+        },
+        {
+          "activity": "first_rains",
+          "month_start": "April",
+          "month_end": null,
+          "zone": null,
+          "state": "benue",
+          "confidence": 0.55,
+          "needs_review": true,
+          "source_id": "yam_calendar_low_conf_ref"
+        }
+      ]
+    },
+    "source_id": "yam_calendar_ref",
+    "notes": "leading/trailing whitespace in crop input is stripped"
+  },
+  {
+    "id": "CC-013",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "yam",
+      "state": "kano"
+    },
+    "expected": {
+      "crop": "yam",
+      "agro_zone": null,
+      "year": null,
+      "state": "kano",
+      "data_available": false,
+      "plant_window": null,
+      "harvest_window": null,
+      "all_signals": []
+    },
+    "source_id": "system",
+    "notes": "state filter with zero matches returns empty, not an error"
+  },
+  {
+    "id": "CC-014",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "maize",
+      "agro_zone": "Southern Guinea Savanna"
+    },
+    "expected": {
+      "crop": "maize",
+      "agro_zone": "Southern Guinea Savanna",
+      "year": null,
+      "state": null,
+      "data_available": false,
+      "plant_window": null,
+      "harvest_window": null,
+      "all_signals": []
+    },
+    "source_id": "system",
+    "notes": "zone with zero matching rows returns empty, not a fallback to another zone"
+  },
+  {
+    "id": "CC-015",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "   "
+    },
+    "expected": {
+      "error": "InvalidInputError"
+    },
+    "source_id": "system",
+    "notes": "whitespace-only crop name is empty after stripping, rejected"
+  },
+  {
+    "id": "CC-016",
+    "function": "crop_calendar",
+    "inputs": {
+      "crop": "maize",
+      "year": 2026
+    },
+    "expected": {
+      "crop": "maize",
+      "agro_zone": null,
+      "year": 2026,
+      "state": null,
+      "data_available": true,
+      "plant_window": {
+        "start_month": "June",
+        "end_month": "July",
+        "confidence": 0.9,
+        "needs_review": false,
+        "source_id": "maize_calendar_ref2"
+      },
+      "harvest_window": null,
+      "all_signals": [
+        {
+          "activity": "plant_in_month",
+          "month_start": "May",
+          "month_end": null,
+          "zone": "Northern Guinea Savanna",
+          "state": null,
+          "confidence": 0.85,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref"
+        },
+        {
+          "activity": "planting_window",
+          "month_start": "June",
+          "month_end": "July",
+          "zone": "Sudan Savanna",
+          "state": null,
+          "confidence": 0.9,
+          "needs_review": false,
+          "source_id": "maize_calendar_ref2"
+        }
+      ]
+    },
+    "source_id": "maize_calendar_ref2",
+    "notes": "year is echoed back but does not filter -- no row in the corpus carries a year yet"
+  }
+]
