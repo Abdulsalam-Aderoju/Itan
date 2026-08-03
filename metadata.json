@@ -1,0 +1,37 @@
+{
+  "team_id": "itan",
+  "domain": "agriculture",
+  "language_scope": ["en", "yo", "ha", "pcm"],
+  "african_alpha_claim": true,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "Muritala Mujeebat",
+    "email": "murrymujjy@gmail.com",
+    "github_handle": "Abdulsalam-Aderoju"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "agriculture",
+    "load_bearing": true,
+    "description": "Ìtàn is a retrieval-grounded, tool-calling agricultural extension agent: a structured knowledge base (crop calendars, spacing, fertiliser rates, agrochemical registrations, varieties, pests) plus hybrid retrieval over African agricultural extension literature grounds every answer in a cited source, and deterministic Python tools handle all arithmetic (fertiliser dosing, seed rate, spray dilution, margins) instead of model recall. Targets extension officers and the farmers they serve, fully offline."
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "tp_001",
+      "prompt": "I get 0.6 hectares of maize for Kaduna, how much urea I go need and when I go apply am?"
+    },
+    {
+      "prompt_id": "tp_002",
+      "prompt": "My maize leaves have ragged holes and there is sawdust-like frass packed in the whorl. What pest is this, and what registered treatment should I use?"
+    }
+  ],
+  "model": {
+    "name": "Qwen2.5-1.5B-Instruct-Q4_K_M",
+    "runtime": "llama.cpp",
+    "quantization": "GGUF Q4_K_M",
+    "parameters_estimate": "1.5B",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "model/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+  }
+}

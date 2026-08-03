@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-GOLD_PATH = str(Path(__file__).parent / "gold_questions_200_pest_diagnosis.jsonl")
+GOLD_PATH = str(Path(__file__).resolve().parents[1] / "datasets" / "gold_questions_200_pest_diagnosis.jsonl")
 MODEL_NAME = "BAAI/bge-small-en-v1.5"
 TIERS = ["A", "B", "C", "D"]
 

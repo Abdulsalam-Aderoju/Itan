@@ -11,7 +11,7 @@ Prereqs:
             --host 127.0.0.1 --port 8080
 
 Usage:
-    python run_baseline.py --questions ../../agbe_eval_questions.jsonl --out baseline_results.jsonl
+    python eval/run_baseline.py --questions eval/datasets/gold_questions_200_pest_diagnosis.jsonl --out eval/results/baseline_results_raw_model_no_rag.jsonl
 """
 from __future__ import annotations
 
@@ -68,9 +68,13 @@ def call_model(base_url: str, question: str, max_tokens: int = 256, temperature:
 
 
 def main():
+    repo_root = Path(__file__).resolve().parent.parent
+    default_questions = repo_root / "eval" / "datasets" / "gold_questions_200_pest_diagnosis.jsonl"
+    default_out = repo_root / "eval" / "results" / "baseline_results_raw_model_no_rag.jsonl"
+
     ap = argparse.ArgumentParser()
-    ap.add_argument("--questions", type=Path, default=Path(__file__).resolve().parent.parent.parent / "agbe_eval_questions.jsonl")
-    ap.add_argument("--out", type=Path, default=Path(__file__).resolve().parent / "baseline_results.jsonl")
+    ap.add_argument("--questions", type=Path, default=default_questions)
+    ap.add_argument("--out", type=Path, default=default_out)
     ap.add_argument("--base-url", default="http://127.0.0.1:8080")
     ap.add_argument("--max-tokens", type=int, default=256)
     ap.add_argument("--limit", type=int, default=None, help="only run first N questions (for a quick smoke test)")

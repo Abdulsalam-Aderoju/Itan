@@ -97,7 +97,18 @@ class Router:
                 tier_scores={t: None for t in TIERS},  # not computed -- keyword short-circuit
             )
 
+        if embedding is None:
+            raise ValueError(
+                "Router.classify() received embedding=None -- the caller's embed_query() "
+                "must have failed upstream. Refusing to guess a tier from no embedding; "
+                "fix the embedding failure rather than routing on garbage."
+            )
         emb = np.asarray(embedding, dtype=np.float32)
+        if emb.ndim != 1:
+            raise ValueError(
+                f"Router.classify() received an embedding with shape {emb.shape}, expected a "
+                f"1-D vector of length {self.embedding_dim}."
+            )
         norm = np.linalg.norm(emb)
         if norm > 0:
             emb = emb / norm

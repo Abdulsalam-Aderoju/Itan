@@ -5,23 +5,40 @@ the refusal confidence threshold (blueprint Sec 5.4).
 
 Design: embedding-similarity lookup against the 200 labeled gold questions,
 using bge-small-en-v1.5 (matches the corpus pipeline's embedding model
-choice) via sentence-transformers. No LLM call -- must be fast (<5ms/query
-per the blueprint's own budget).
+choice). No LLM call -- must be fast (<5ms/query per the blueprint's own
+budget).
+
+IMPORTANT: embeddings here MUST come from the exact same pipeline used at
+inference time (engine.retrieval.RetrievalEngine.embed_query(), the
+quantized ONNX bge-small used for retrieval) rather than a separately-loaded
+raw sentence-transformers model. An earlier version of this script used
+plain SentenceTransformer(...).encode() -- cosine similarity to the
+production ONNX embedder for the same text was only ~0.97-0.99 (quantization
++ pooling-path drift, not a bug in either embedder individually), and the
+router's tier-decision margins are frequently much narrower than that (e.g.
+0.03-0.05 between the top two tiers), so that drift alone was enough to
+systematically misroute clearly in-scope questions to Tier D. Centroids/
+thresholds calibrated on the wrong embedding space silently degrade routing
+in production even though every unit test passes.
 
 Method selection is itself an ablation, not an assumption: we cross-validate
 k-NN (k=1,3,5) against a per-tier centroid classifier and report numbers for
 both before picking one.
 """
 import json
+import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
-GOLD_PATH = Path(__file__).parent / "gold_questions_200_pest_diagnosis.jsonl"
-MODEL_NAME = "BAAI/bge-small-en-v1.5"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+from engine.retrieval import RetrievalEngine  # noqa: E402
+
+GOLD_PATH = Path(__file__).resolve().parents[1] / "datasets" / "gold_questions_200_pest_diagnosis.jsonl"
+MODEL_NAME = "BAAI/bge-small-en-v1.5-onnx-quantized (production pipeline, via RetrievalEngine.embed_query)"
 SEED = 42
 N_FOLDS = 5
 
@@ -120,14 +137,13 @@ def main():
     rows = load_gold()
     print(f"{len(rows)} questions loaded, tiers: {Counter(r['tier'] for r in rows)}")
 
-    print(f"Loading {MODEL_NAME} (first run downloads ~130MB)...")
-    model = SentenceTransformer(MODEL_NAME)
+    print(f"Loading production retrieval engine ({MODEL_NAME})...")
+    engine = RetrievalEngine()
 
-    print("Embedding all questions...")
+    print("Embedding all questions (via the same embed_query() path used at inference time)...")
     t0 = time.time()
     texts = [r["question"] for r in rows]
-    embeddings = model.encode(texts, normalize_embeddings=True, show_progress_bar=True)
-    embeddings = np.asarray(embeddings, dtype=np.float32)
+    embeddings = np.stack([engine.embed_query(t) for t in texts]).astype(np.float32)
     print(f"Embedded {len(texts)} questions in {time.time()-t0:.1f}s "
           f"({(time.time()-t0)/len(texts)*1000:.2f} ms/question)")
 

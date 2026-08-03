@@ -139,6 +139,11 @@ def seed_rate(
             )
 
         elif material_type in ('cutting', 'sett'):
+            # Note: For vegetative materials (cuttings, setts), germination/sprouting rate
+            # is not used to scale the initial count of planting materials. This is because
+            # vegetative stands have a strict 1:1 relationship with the physical stands planted,
+            # and any failure to sprout is resolved post-planting by supplying (replacing)
+            # individual stands, rather than sowing extra materials in the same stand.
             stands_per_unit = row['stands_per_unit'] or 1
             cuttings_exact = plant_population * stands_per_unit
             cuttings_count = round_cuttings(cuttings_exact)

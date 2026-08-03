@@ -607,10 +607,10 @@
       "bundles": null,
       "bundles_exact": null,
       "source_ids": [
-        "maize_seed_ref"
+        "naerls_maize_2021_p14"
       ]
     },
-    "source_id": "maize_seed_ref",
+    "source_id": "naerls_maize_2021_p14",
     "notes": "baseline seed weight for maize"
   },
   {
@@ -643,10 +643,10 @@
       "bundles": null,
       "bundles_exact": null,
       "source_ids": [
-        "maize_seed_ref"
+        "naerls_maize_2021_p14"
       ]
     },
-    "source_id": "maize_seed_ref",
+    "source_id": "naerls_maize_2021_p14",
     "notes": "smallholder plot maize seed weight"
   },
   {
@@ -679,10 +679,10 @@
       "bundles": null,
       "bundles_exact": null,
       "source_ids": [
-        "maize_seed_ref"
+        "naerls_maize_2021_p14"
       ]
     },
-    "source_id": "maize_seed_ref",
+    "source_id": "naerls_maize_2021_p14",
     "notes": "commercial maize seed calculation with 2 seeds/stand"
   },
   {
@@ -715,10 +715,10 @@
       "bundles": null,
       "bundles_exact": null,
       "source_ids": [
-        "maize_seed_ref"
+        "naerls_maize_2021_p14"
       ]
     },
-    "source_id": "maize_seed_ref",
+    "source_id": "naerls_maize_2021_p14",
     "notes": "verifies low germination rate roughly doubles seed weight requirement"
   },
   {
@@ -751,10 +751,10 @@
       "bundles": 200,
       "bundles_exact": 200.0,
       "source_ids": [
-        "cassava_material_ref"
+        "cgspace:95a959a1-3344-488c-b0a6-5d2994ed25f2"
       ]
     },
-    "source_id": "cassava_material_ref",
+    "source_id": "cgspace:95a959a1-3344-488c-b0a6-5d2994ed25f2",
     "notes": "vegetative cutting rate with bundles calculation"
   },
   {
@@ -787,10 +787,10 @@
       "bundles": null,
       "bundles_exact": null,
       "source_ids": [
-        "yam_material_ref"
+        "cgspace:10568/80404"
       ]
     },
-    "source_id": "yam_material_ref",
+    "source_id": "cgspace:10568/80404",
     "notes": "vegetative sett rate calculation without bundles"
   },
   {
@@ -1200,10 +1200,10 @@
       "spray_volume_l_per_ha": 200.0,
       "pre_harvest_interval_days": 30,
       "source_ids": [
-        "agrochemical_ref_1"
+        "nafdac_agrochemicals_2020"
       ]
     },
-    "source_id": "agrochemical_ref_1",
+    "source_id": "nafdac_agrochemicals_2020",
     "notes": "Glyphosate dilution using default DB rate and conversion from L to ml"
   },
   {
@@ -1224,10 +1224,10 @@
       "spray_volume_l_per_ha": 250.0,
       "pre_harvest_interval_days": 45,
       "source_ids": [
-        "agrochemical_ref_2"
+        "nafdac_agrochemicals_2020"
       ]
     },
-    "source_id": "agrochemical_ref_2",
+    "source_id": "nafdac_agrochemicals_2020",
     "notes": "Paraquat crop-specific dilution check"
   },
   {
@@ -1248,10 +1248,10 @@
       "spray_volume_l_per_ha": 200.0,
       "pre_harvest_interval_days": 7,
       "source_ids": [
-        "agrochemical_ref_3"
+        "nafdac_agrochemicals_2020"
       ]
     },
-    "source_id": "agrochemical_ref_3",
+    "source_id": "nafdac_agrochemicals_2020",
     "notes": "Mancozeb conversion from kg to g, verifying round-to-nearest rounding (112.5 -> 113)"
   },
   {
@@ -1272,10 +1272,10 @@
       "spray_volume_l_per_ha": 200.0,
       "pre_harvest_interval_days": 30,
       "source_ids": [
-        "agrochemical_ref_1"
+        "nafdac_agrochemicals_2020"
       ]
     },
-    "source_id": "agrochemical_ref_1",
+    "source_id": "nafdac_agrochemicals_2020",
     "notes": "Glyphosate dilution with user overridden rate of 6.0 L/ha"
   },
   {
