@@ -1,0 +1,24 @@
+# Model weights — never commit these to git (ADTC rule: evaluator downloads via download_model.sh)
+model/*.gguf
+model/*.bin
+model/*.safetensors
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+itan/
+
+# Local dev virtualenv (already self-ignored via itan/.gitignore, kept here for clarity)
+
+# ADTC external tooling — cloned locally for testing, not part of the submission
+.adtc-tools/
+
+# Local profiler output
+submission.json
+audit.json
+verdict.json
+
+# OS
+.DS_Store
+Thumbs.db

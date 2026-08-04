@@ -9,12 +9,21 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import sys
 # Set up environment variable for database path BEFORE importing module
-DB_FILE_PATH = Path(__file__).parent / "test_agri_calc.db"
+use_real_db = "--real-db" in sys.argv
+if use_real_db:
+    # Remove from sys.argv so unittest or custom runner does not get confused
+    sys.argv = [arg for arg in sys.argv if arg != "--real-db"]
+    REPO_ROOT = Path(__file__).resolve().parents[2]
+    DB_FILE_PATH = REPO_ROOT / "engine" / "tools" / "agri_calc" / "agri_calc.db"
+else:
+    REPO_ROOT = Path(__file__).resolve().parents[2]
+    DB_FILE_PATH = Path(__file__).parent / "test_agri_calc.db"
+
 os.environ["AGRI_CALC_DB_PATH"] = str(DB_FILE_PATH)
 
 # Add team repo root to system path
-REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 # Now import the public interface
@@ -49,8 +58,8 @@ def init_test_db():
         products = [
             ("NPK 15-15-15", 15.0, 15.0, 15.0, 50.0, "naerls_maize_2021_p14"),
             ("Urea", 46.0, 0.0, 0.0, 50.0, "naerls_maize_2021_p14"),
-            ("MOP", 0.0, 0.0, 60.0, 50.0, "mop_source"),
-            ("SSP", 0.0, 18.0, 0.0, 50.0, "ssp_source"),
+            ("MOP", 0.0, 0.0, 60.0, 50.0, "naerls_maize_2021_p14"),
+            ("SSP", 0.0, 18.0, 0.0, 50.0, "naerls_maize_2021_p14"),
         ]
         cursor.executemany(
             "INSERT INTO product (product_name, n_pct, p2o5_pct, k2o_pct, bag_weight_kg, source_id) VALUES (?, ?, ?, ?, ?, ?)",
@@ -59,12 +68,12 @@ def init_test_db():
 
         # 2. Seed planting_material table
         materials = [
-            ("maize", "seed", 250.0, 1, None, "maize_seed_ref"),
-            ("cassava", "cutting", None, 1, 50, "cassava_material_ref"),
-            ("yam", "sett", None, 1, None, "yam_material_ref"),
-            ("cowpea", "seed", 150.0, 1, None, "cowpea_seed_ref"),
-            ("tomato", "seed", 3.0, 1, None, "tomato_seed_ref"),
-            ("rice", "seed", 30.0, 1, None, "rice_seed_ref"),
+            ("maize", "seed", 250.0, 1, None, "naerls_maize_2021_p14"),
+            ("cassava", "cutting", None, 1, 50, "cgspace:95a959a1-3344-488c-b0a6-5d2994ed25f2"),
+            ("yam", "sett", None, 1, None, "cgspace:10568/80404"),
+            ("cowpea", "seed", 150.0, 1, None, "cgspace:94bed861-c0a2-4073-a9cf-1909836782d4"),
+            ("tomato", "seed", 3.0, 1, None, "tomato_sudan_2020"),
+            ("rice", "seed", 30.0, 1, None, "cgspace:10568/108804"),
         ]
         cursor.executemany(
             "INSERT INTO planting_material (crop, material_type, unit_weight_g, stands_per_unit, units_per_bundle, source_id) VALUES (?, ?, ?, ?, ?, ?)",
@@ -94,9 +103,9 @@ def init_test_db():
 
         # 5. Seed spacing table
         spacings = [
-            ("maize", "Northern Guinea Savanna", 75.0, 25.0, "maize_spacing_ref"),
-            ("cassava", "Southern Guinea Savanna", 100.0, 100.0, "cassava_spacing_ref"),
-            ("yam", "Southern Guinea Savanna", 100.0, 100.0, "yam_spacing_ref"),
+            ("maize", "Northern Guinea Savanna", 75.0, 25.0, "naerls_maize_2021_p14"),
+            ("cassava", "Southern Guinea Savanna", 100.0, 100.0, "cgspace:95a959a1-3344-488c-b0a6-5d2994ed25f2"),
+            ("yam", "Southern Guinea Savanna", 100.0, 100.0, "cgspace:10568/80404"),
         ]
         cursor.executemany(
             "INSERT INTO spacing (crop, zone, row_cm, within_row_cm, source_id) VALUES (?, ?, ?, ?, ?)",
@@ -105,9 +114,9 @@ def init_test_db():
 
         # 6. Seed agrochemical table
         agrochemicals = [
-            ("Glyphosate", None, 4.0, "l", 30, "agrochemical_ref_1"),
-            ("Paraquat", "maize", 3.0, "l", 45, "agrochemical_ref_2"),
-            ("Mancozeb", "tomato", 1.5, "kg", 7, "agrochemical_ref_3"),
+            ("Glyphosate", None, 4.0, "l", 30, "nafdac_agrochemicals_2020"),
+            ("Paraquat", "maize", 3.0, "l", 45, "nafdac_agrochemicals_2020"),
+            ("Mancozeb", "tomato", 1.5, "kg", 7, "nafdac_agrochemicals_2020"),
         ]
         cursor.executemany(
             "INSERT INTO agrochemical (product_name, crop, rate_per_ha, rate_unit, pre_harvest_interval_days, source_id) VALUES (?, ?, ?, ?, ?, ?)",
@@ -133,8 +142,11 @@ def diff_dicts(expected, actual):
 
 def run_tests():
     """Load test cases and run them against the seeded database."""
-    print("Initializing test database...")
-    init_test_db()
+    if use_real_db:
+        print(f"Running tests against the REAL database: {DB_FILE_PATH}")
+    else:
+        print("Initializing test database...")
+        init_test_db()
     
     test_cases_path = Path(__file__).parent / "test_cases.json"
     if not test_cases_path.exists():
@@ -243,7 +255,7 @@ def run_tests():
                     failed_count += 1
 
     # Cleanup temporary test db
-    if DB_FILE_PATH.exists():
+    if not use_real_db and DB_FILE_PATH.exists():
         try:
             DB_FILE_PATH.unlink()
         except OSError:
