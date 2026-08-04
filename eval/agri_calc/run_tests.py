@@ -114,9 +114,9 @@ def init_test_db():
 
         # 6. Seed agrochemical table
         agrochemicals = [
-            ("Glyphosate", None, 4.0, "l", 30, "nafdac_agrochemicals_2020"),
-            ("Paraquat", "maize", 3.0, "l", 45, "nafdac_agrochemicals_2020"),
-            ("Mancozeb", "tomato", 1.5, "kg", 7, "nafdac_agrochemicals_2020"),
+            ("Glyphosate", None, 4.0, "l", 30, "agrochemical_ref_1"),
+            ("Paraquat", "maize", 3.0, "l", 45, "agrochemical_ref_2"),
+            ("Mancozeb", "tomato", 1.5, "kg", 7, "agrochemical_ref_3"),
         ]
         cursor.executemany(
             "INSERT INTO agrochemical (product_name, crop, rate_per_ha, rate_unit, pre_harvest_interval_days, source_id) VALUES (?, ?, ?, ?, ?, ?)",
