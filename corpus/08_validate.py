@@ -31,26 +31,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import CORPUS_DIR, CROPS, ZONES, print_elapsed_checkpoint, progress_line  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root, for `engine`
 
 # torch must be imported before numpy/pandas, not after -- see the matching
-# comment in 06_embed.py. This script loads pandas/numpy immediately below,
-# then dynamically loads 06_embed.py's module (which imports torch) later
-# inside run_retrieval_eval() -- pandas-before-torch reliably crashes the
-# whole process here with STATUS_ACCESS_VIOLATION (0xC0000005), a raw
-# native crash with no Python traceback at all, not a catchable exception.
+# comment in 06_embed.py/engine/retrieval.py. pandas-before-torch reliably
+# crashes the whole process here with STATUS_ACCESS_VIOLATION (0xC0000005),
+# a raw native crash with no Python traceback at all, not a catchable
+# exception -- engine.retrieval (imported lazily inside run_retrieval_eval())
+# also imports torch first for the same reason, but that's too late if
+# pandas below has already claimed the DLL first.
 import torch  # noqa: F401,E402
 
-import numpy as np
 import pandas as pd
 
 CHUNKS_PARQUET = CORPUS_DIR / "chunks.parquet"
-VECTORS_NPY = CORPUS_DIR / "vectors.npy"
-CHUNK_IDS_JSON = CORPUS_DIR / "chunk_ids.json"
-BM25_PKL = CORPUS_DIR / "bm25.pkl"
 REPORT_JSON = CORPUS_DIR / "validation_report.json"
 
 TOP_K = 5
-RRF_K = 60
 HIT_RATE_GAP_THRESHOLD = 0.60
 MIN_CHUNK_TOKENS = 50
 
@@ -189,68 +186,7 @@ def load_corpus_artifacts():
     print(f"[validate] loading {CHUNKS_PARQUET} ...")
     df = pd.read_parquet(CHUNKS_PARQUET)
     df = df.set_index("chunk_id", drop=False)
-
-    vectors, vec_chunk_ids = None, None
-    if VECTORS_NPY.exists() and CHUNK_IDS_JSON.exists():
-        print(f"[validate] loading {VECTORS_NPY} + {CHUNK_IDS_JSON} ...")
-        vectors = np.load(VECTORS_NPY).astype(np.float32)
-        with open(CHUNK_IDS_JSON, encoding="utf-8") as fh:
-            vec_chunk_ids = json.load(fh)
-    else:
-        print("[validate] WARNING: vectors.npy/chunk_ids.json missing -- dense retrieval will be skipped "
-              "(run 06_embed.py). Falling back to BM25-only evaluation.")
-
-    bm25_data = None
-    if BM25_PKL.exists():
-        import pickle
-        print(f"[validate] loading {BM25_PKL} ...")
-        with open(BM25_PKL, "rb") as fh:
-            bm25_data = pickle.load(fh)
-    else:
-        print("[validate] WARNING: bm25.pkl missing -- BM25 retrieval will be skipped (run 07_bm25.py).")
-
-    return df, vectors, vec_chunk_ids, bm25_data
-
-
-def load_embed_module():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("embed_stage", CORPUS_DIR / "06_embed.py")
-    embed_mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(embed_mod)
-    return embed_mod
-
-
-def load_bm25_module():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("bm25_stage", CORPUS_DIR / "07_bm25.py")
-    bm25_mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(bm25_mod)
-    return bm25_mod
-
-
-def dense_retrieve(
-    query: str, vectors: np.ndarray, vec_chunk_ids: list[str], k: int, embed_mod, model, tokenizer,
-) -> list[str]:
-    q_vec = embed_mod.embed_texts([query], model=model, tokenizer=tokenizer)[0].astype(np.float32)
-    q_vec = q_vec / (np.linalg.norm(q_vec) + 1e-9)
-    sims = vectors @ q_vec
-    top_idx = np.argsort(-sims)[:k]
-    return [vec_chunk_ids[i] for i in top_idx]
-
-
-def bm25_retrieve(query: str, bm25_data: dict, k: int, bm25_mod) -> list[str]:
-    tokens = bm25_mod.tokenize(query)
-    scores = bm25_data["bm25"].get_scores(tokens)
-    top_idx = np.argsort(-scores)[:k]
-    return [bm25_data["chunk_ids"][i] for i in top_idx]
-
-
-def rrf_fuse(rank_lists: list[list[str]], k: int = RRF_K, top_k: int = TOP_K) -> list[str]:
-    scores: dict[str, float] = {}
-    for ranked in rank_lists:
-        for rank, cid in enumerate(ranked):
-            scores[cid] = scores.get(cid, 0.0) + 1.0 / (k + rank + 1)
-    return [cid for cid, _ in sorted(scores.items(), key=lambda kv: -kv[1])[:top_k]]
+    return df
 
 
 def is_hit(chunk_ids: list[str], df: pd.DataFrame, question: dict) -> bool:
@@ -270,35 +206,33 @@ def is_hit(chunk_ids: list[str], df: pd.DataFrame, question: dict) -> bool:
     return False
 
 
-def run_retrieval_eval(df, vectors, vec_chunk_ids, bm25_data) -> dict:
-    # Load the embed module + ONNX model, and the bm25 tokenizer module,
-    # exactly ONCE here -- not per question. dense_retrieve()/bm25_retrieve()
-    # used to reimport their module and (for dense_retrieve) reload the
-    # entire quantized ONNX model on every single call, which meant all 50
-    # gold questions each paid the full first-run model-load cost again.
-    embed_mod = model = tokenizer = None
-    if vectors is not None:
-        print("[validate] loading embed module + ONNX model once, reused for all 50 questions ...")
-        embed_mod = load_embed_module()
-        model, tokenizer = embed_mod.get_quantized_model_and_tokenizer()
-
-    bm25_mod = None
-    if bm25_data is not None:
-        print("[validate] loading bm25 tokenizer module ...")
-        bm25_mod = load_bm25_module()
+def run_retrieval_eval(df) -> dict:
+    # Uses the actual production RetrievalEngine (engine/retrieval.py) --
+    # this used to be a separate hand-rolled dense+BM25+RRF implementation
+    # duplicated here, which meant a real fix to the production retrieval
+    # path (e.g. the crop-aware reranking added 2026-08-04) silently didn't
+    # show up in this validation harness's numbers. One engine, one set of
+    # numbers, always in sync by construction.
+    from engine.retrieval import RetrievalEngine
+    print("[validate] loading RetrievalEngine (embed model + BM25 + vectors), reused for all 50 questions ...")
+    engine = RetrievalEngine(corpus_dir=CORPUS_DIR)
+    if engine.vectors is None:
+        print("[validate] WARNING: vectors.npy/chunk_ids.json missing -- dense retrieval will be skipped "
+              "(run 06_embed.py). Falling back to BM25-only evaluation.")
+    if engine.bm25_data is None:
+        print("[validate] WARNING: bm25.pkl missing -- BM25 retrieval will be skipped (run 07_bm25.py).")
 
     results = []
     total = len(GOLD_QUESTIONS)
     start_time = time.time()
     for i, q in enumerate(GOLD_QUESTIONS, start=1):
         try:
-            dense_ids = (
-                dense_retrieve(q["query"], vectors, vec_chunk_ids, TOP_K, embed_mod, model, tokenizer)
-                if vectors is not None else []
-            )
-            bm25_ids = bm25_retrieve(q["query"], bm25_data, TOP_K, bm25_mod) if bm25_data is not None else []
+            query_vec = engine.embed_query(q["query"]) if engine.vectors is not None else None
+            dense_ids = engine.dense_search(query_vec, top_k=TOP_K * 2) if query_vec is not None else []
+            bm25_ids = engine.bm25_search(q["query"], top_k=TOP_K * 2) if engine.bm25_data is not None else []
+            query_crops = engine.detect_query_crops(q["query"])
             rank_lists = [l for l in (dense_ids, bm25_ids) if l]
-            fused = rrf_fuse(rank_lists) if rank_lists else []
+            fused = engine.rrf_fuse(rank_lists, top_k=TOP_K, query_crops=query_crops) if rank_lists else []
             hit = is_hit(fused, df, q) if fused else False
             results.append({**q, "hit": hit, "fused_top5": fused})
             progress_line("validate", i, total, q["id"], ok=True, reason="hit" if hit else "miss")
@@ -369,10 +303,10 @@ def run_structural_checks(df: pd.DataFrame) -> dict:
 
 
 def main():
-    df, vectors, vec_chunk_ids, bm25_data = load_corpus_artifacts()
+    df = load_corpus_artifacts()
     print(f"[validate] {len(df)} chunks loaded. Running {len(GOLD_QUESTIONS)} gold questions ...")
 
-    retrieval_report = run_retrieval_eval(df, vectors, vec_chunk_ids, bm25_data)
+    retrieval_report = run_retrieval_eval(df)
     structural_report = run_structural_checks(df)
 
     report = {"retrieval": retrieval_report, "structural": structural_report}
