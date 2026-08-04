@@ -3,6 +3,23 @@
 Combines dense vector search (bge-small-en-v1.5) with sparse BM25 keyword search
 fused via Reciprocal Rank Fusion (RRF). Hard-caps output to top-4 chunks
 (max ~1,400 tokens) to maintain strict RAM and latency performance budgets.
+
+Crop-aware reranking: every chunk already carries a `crops` tag (from
+corpus/04_chunk.py's word-boundary crop matcher), but until this was
+added, rrf_fuse() never used it -- dense+BM25 similarity alone can rank a
+topically-adjacent-but-wrong-crop chunk above the correct one (confirmed:
+soybean pest/disease queries pulling in groundnut content that shares
+similar symptom vocabulary). rrf_fuse() now boosts candidates whose
+`crops` tag includes a crop detected in the query, and mildly demotes
+candidates explicitly tagged with a DIFFERENT crop -- chunks with no crop
+tag at all are left alone either way, since an untagged chunk (e.g. a
+crop-agnostic pest-control guide) can still be the best available
+evidence. This fixes cross-CROP leakage. It does NOT fix same-crop,
+different-topic confusion (e.g. a maize grey-leaf-spot query surfacing a
+maize streak-virus paper -- both are correctly maize-tagged, so a crop
+filter has nothing to discriminate on there; that's a separate, harder
+problem -- likely a corpus content gap or dense/BM25 balance issue, not
+addressed here).
 """
 from __future__ import annotations
 
@@ -26,6 +43,10 @@ VECTORS_NPY = CORPUS_DIR / "vectors.npy"
 CHUNK_IDS_JSON = CORPUS_DIR / "chunk_ids.json"
 BM25_PKL = CORPUS_DIR / "bm25.pkl"
 ONNX_DIR = CORPUS_DIR / "models" / "bge-small-en-v1.5-onnx"
+
+CROP_MATCH_BOOST = 1.5     # multiplier for a chunk tagged with a crop the query mentions
+CROP_MISMATCH_PENALTY = 0.5  # multiplier for a chunk tagged with a DIFFERENT, specific crop
+# (chunks with no crop tag at all get neither -- see module docstring)
 
 class RetrievalEngine:
     """Thread-safe hybrid dense+sparse retrieval engine."""
@@ -126,12 +147,40 @@ class RetrievalEngine:
         top_indices = np.argsort(-scores)[:top_k]
         return [doc_ids[idx] for idx in top_indices if scores[idx] > 0]
 
-    def rrf_fuse(self, rank_lists: list[list[str]], k: int = 60, top_k: int = 4) -> list[str]:
-        """Reciprocal Rank Fusion (RRF) over dense and sparse rank lists."""
+    def detect_query_crops(self, query: str) -> list[str]:
+        """Which corpus crop(s) the query mentions, using the exact same
+        word-boundary matcher corpus/common.py's find_crops() uses to tag
+        every chunk -- so query-side and corpus-side crop detection agree
+        by construction rather than needing to be kept in sync by hand."""
+        sys.path.insert(0, str(self.corpus_dir))
+        from common import find_crops
+        return find_crops(query)
+
+    def rrf_fuse(self, rank_lists: list[list[str]], k: int = 60, top_k: int = 4,
+                 query_crops: list[str] | None = None) -> list[str]:
+        """Reciprocal Rank Fusion (RRF) over dense and sparse rank lists,
+        then a crop-aware rerank -- see module docstring for why."""
         scores: dict[str, float] = {}
         for ranked in rank_lists:
             for rank, cid in enumerate(ranked):
                 scores[cid] = scores.get(cid, 0.0) + 1.0 / (k + rank + 1)
+
+        if query_crops and self.chunks_df is not None:
+            query_crop_set = set(query_crops)
+            for cid in scores:
+                if cid not in self.chunks_df.index:
+                    continue
+                row = self.chunks_df.loc[cid]
+                if isinstance(row, pd.DataFrame):
+                    row = row.iloc[0]
+                chunk_crops = {c for c in str(row.get("crops", "")).split(";") if c}
+                if not chunk_crops:
+                    continue  # untagged chunk -- no boost, no penalty
+                if chunk_crops & query_crop_set:
+                    scores[cid] *= CROP_MATCH_BOOST
+                else:
+                    scores[cid] *= CROP_MISMATCH_PENALTY
+
         sorted_cids = sorted(scores.items(), key=lambda kv: -kv[1])
         return [cid for cid, _ in sorted_cids[:top_k]]
 
@@ -149,8 +198,9 @@ class RetrievalEngine:
         dense_ids = self.dense_search(query_vec, top_k=top_k * 2) if query_vec is not None else []
         bm25_ids = self.bm25_search(query, top_k=top_k * 2)
 
+        query_crops = self.detect_query_crops(query)
         rank_lists = [l for l in (dense_ids, bm25_ids) if l]
-        fused_cids = self.rrf_fuse(rank_lists, top_k=top_k) if rank_lists else []
+        fused_cids = self.rrf_fuse(rank_lists, top_k=top_k, query_crops=query_crops) if rank_lists else []
 
         results = []
         for cid in fused_cids:
