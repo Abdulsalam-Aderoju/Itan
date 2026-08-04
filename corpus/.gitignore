@@ -11,6 +11,9 @@ models/
 *.npy
 bm25.pkl
 chunk_ids.json
+chunk_ids.partial.json
+chunk_text_hashes.json
+vectors.partial.npy
 sources.csv
 blocked_sources.txt
 extraction_errors.log

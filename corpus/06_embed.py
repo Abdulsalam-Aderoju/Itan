@@ -12,6 +12,7 @@ Runnable standalone: python corpus/06_embed.py
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import time
@@ -44,6 +45,14 @@ CHUNK_IDS_JSON = CORPUS_DIR / "chunk_ids.json"
 # in-progress state", never "the finished output" (that's VECTORS_NPY).
 PARTIAL_VECTORS_NPY = CORPUS_DIR / "vectors.partial.npy"
 PARTIAL_CHUNK_IDS_JSON = CORPUS_DIR / "chunk_ids.partial.json"
+# {chunk_id: sha1(text)[:16]} for whatever's currently in VECTORS_NPY --
+# lets a later run tell "same chunk_id, same text, safe to reuse" apart
+# from "same chunk_id, different text" (e.g. a document that got re-chunked
+# from scratch after a content fix: its new chunk_0000 can coincidentally
+# reuse an old chunk_id that held completely different text). See
+# load_reusable_vectors() below -- reuse always requires a hash match, never
+# chunk_id alone.
+CHUNK_TEXT_HASHES_JSON = CORPUS_DIR / "chunk_text_hashes.json"
 ONNX_DIR = CORPUS_DIR / "models" / "bge-small-en-v1.5-onnx"
 
 MODEL_ID = "BAAI/bge-small-en-v1.5"
@@ -227,6 +236,42 @@ def run_embed_corpus(texts: list[str], chunk_ids: list[str], model, tokenizer, b
     return np.concatenate(all_vecs, axis=0) if all_vecs else np.zeros((0, 384), dtype=np.float32)
 
 
+def text_hash(text: str) -> str:
+    return hashlib.sha1(text.encode("utf-8", errors="ignore")).hexdigest()[:16]
+
+
+def load_reusable_vectors(new_chunk_ids: list[str], new_texts: list[str]) -> dict[str, np.ndarray]:
+    """Before this run's own output overwrites VECTORS_NPY/CHUNK_IDS_JSON,
+    salvage embeddings for every chunk that's unchanged between the
+    previous run and the current corpus. Most documents are untouched
+    between runs (02_extract.py/03_clean.py skip already-processed files),
+    so re-embedding their chunks from scratch would be pure waste -- but a
+    document that WAS re-chunked (e.g. after fixing its extraction) starts
+    renumbering from chunk_0000 again with entirely different text, so a
+    reused chunk_id can coincidentally collide with an old chunk_id that
+    held unrelated content. A chunk_id match alone is therefore not safe;
+    reuse additionally requires CHUNK_TEXT_HASHES_JSON's hash of the OLD
+    text to match a hash of the NEW text. No hash file yet (e.g. the first
+    run after this feature was added) means nothing can be verified safe
+    to reuse -- returns {} rather than trusting chunk_id alone, same as if
+    there were no previous output at all.
+
+    Returns {chunk_id: vector} for whatever's verified unchanged."""
+    if not (VECTORS_NPY.exists() and CHUNK_IDS_JSON.exists() and CHUNK_TEXT_HASHES_JSON.exists()):
+        return {}
+    try:
+        old_ids = json.loads(CHUNK_IDS_JSON.read_text(encoding="utf-8"))
+        old_vecs = np.load(VECTORS_NPY).astype(np.float32)
+        old_hashes = json.loads(CHUNK_TEXT_HASHES_JSON.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    new_hash_by_id = {cid: text_hash(t) for cid, t in zip(new_chunk_ids, new_texts)}
+    return {
+        cid: old_vecs[i] for i, cid in enumerate(old_ids)
+        if cid in new_hash_by_id and old_hashes.get(cid) == new_hash_by_id[cid]
+    }
+
+
 def main():
     if not CHUNKS_PARQUET.exists():
         print(f"[embed] ERROR: {CHUNKS_PARQUET} not found. Run 04_chunk.py first.")
@@ -247,19 +292,50 @@ def main():
         except Exception:
             pass  # any read/shape issue -> fall through and re-embed
 
-    n_batches = max(1, -(-len(texts) // BATCH_SIZE))
-    print(f"[embed] {len(texts)} chunks ({n_batches} batches) to embed with {MODEL_ID} (8-bit ONNX, batch={BATCH_SIZE})")
+    reusable = load_reusable_vectors(chunk_ids, texts)
+    if reusable:
+        n_new = len(chunk_ids) - len(reusable)
+        print(f"[embed] reusing {len(reusable)} of {len(chunk_ids)} embeddings unchanged from the previous "
+              f"run's output -- only {n_new} chunk(s) actually need (re-)computing")
+
+    texts_to_embed = [t for t, cid in zip(texts, chunk_ids) if cid not in reusable]
+    ids_to_embed = [cid for cid in chunk_ids if cid not in reusable]
+
+    n_batches = max(1, -(-len(texts_to_embed) // BATCH_SIZE))
+    print(f"[embed] {len(texts_to_embed)} chunks ({n_batches} batches) to embed with {MODEL_ID} (8-bit ONNX, batch={BATCH_SIZE})")
+
+    if not texts_to_embed:
+        print("[embed] nothing new to embed -- every chunk was reused from the previous run")
+        vectors_f16 = np.stack([reusable[cid] for cid in chunk_ids]).astype(np.float16)
+        np.save(VECTORS_NPY, vectors_f16)
+        with open(CHUNK_IDS_JSON, "w", encoding="utf-8") as fh:
+            json.dump(chunk_ids, fh)
+        with open(CHUNK_TEXT_HASHES_JSON, "w", encoding="utf-8") as fh:
+            json.dump({cid: text_hash(t) for cid, t in zip(chunk_ids, texts)}, fh)
+        print(f"[embed] DONE (reuse-only). vectors shape: {vectors_f16.shape}")
+        return
 
     model, tokenizer = get_quantized_model_and_tokenizer()
 
     start = time.time()
-    vectors = run_embed_corpus(texts, chunk_ids, model, tokenizer, batch_size=BATCH_SIZE)
+    new_vectors = run_embed_corpus(texts_to_embed, ids_to_embed, model, tokenizer, batch_size=BATCH_SIZE)
     elapsed = time.time() - start
+
+    # Splice the freshly-computed vectors back together with the reused
+    # ones, in CHUNKS_PARQUET's original order -- ids_to_embed and
+    # new_vectors are in that same relative order (run_embed_corpus doesn't
+    # reorder), so a running index into new_vectors as chunk_ids is walked
+    # in full-corpus order is enough; no id-keyed lookup needed for the
+    # newly-computed half.
+    new_vecs_by_id = dict(zip(ids_to_embed, new_vectors))
+    vectors = np.stack([reusable[cid] if cid in reusable else new_vecs_by_id[cid] for cid in chunk_ids])
 
     vectors_f16 = vectors.astype(np.float16)
     np.save(VECTORS_NPY, vectors_f16)
     with open(CHUNK_IDS_JSON, "w", encoding="utf-8") as fh:
         json.dump(chunk_ids, fh)
+    with open(CHUNK_TEXT_HASHES_JSON, "w", encoding="utf-8") as fh:
+        json.dump({cid: text_hash(t) for cid, t in zip(chunk_ids, texts)}, fh)
 
     # Finished successfully -- the partial checkpoint is now superseded by
     # the real output above, so drop it. Left behind otherwise (crash,
@@ -270,7 +346,8 @@ def main():
 
     assert vectors_f16.shape[0] == len(chunk_ids), "vector count must match chunk count"
 
-    print(f"\n[embed] DONE in {elapsed:.1f}s ({elapsed / max(len(texts), 1):.3f}s/chunk)")
+    print(f"\n[embed] DONE in {elapsed:.1f}s ({elapsed / max(len(texts_to_embed), 1):.3f}s/chunk actually computed, "
+          f"{len(reusable)} more reused for free)")
     print(f"[embed] vectors shape: {vectors_f16.shape} (dtype={vectors_f16.dtype})")
     print(f"[embed] chunk count matches vector count: {vectors_f16.shape[0] == len(chunk_ids)}")
     print(f"[embed] Written: {VECTORS_NPY}, {CHUNK_IDS_JSON}")
