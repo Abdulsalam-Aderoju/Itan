@@ -281,17 +281,14 @@ def main():
     texts = df["text"].tolist()
     chunk_ids = df["chunk_id"].tolist()
 
-    if VECTORS_NPY.exists() and CHUNK_IDS_JSON.exists():
-        try:
-            existing_ids = json.loads(CHUNK_IDS_JSON.read_text(encoding="utf-8"))
-            existing_count = np.load(VECTORS_NPY, mmap_mode="r").shape[0]
-            if existing_count == len(chunk_ids) and len(existing_ids) == len(chunk_ids):
-                print(f"[embed] SKIP: {VECTORS_NPY} already has {existing_count} vectors "
-                      f"matching current chunk count ({len(chunk_ids)}). Delete it to force a re-embed.")
-                return
-        except Exception:
-            pass  # any read/shape issue -> fall through and re-embed
-
+    # No separate "skip if counts match" fast path here on purpose -- it
+    # used to short-circuit before ever checking per-chunk content hashes,
+    # which is wrong whenever the corpus changes in a way that happens to
+    # leave the TOTAL count unchanged (e.g. some documents shrink while
+    # others grow). load_reusable_vectors() below already handles the
+    # "everything is reusable" case just as cheaply (same vectors written
+    # back out, model never loaded), so nothing is lost by always routing
+    # through it.
     reusable = load_reusable_vectors(chunk_ids, texts)
     if reusable:
         n_new = len(chunk_ids) - len(reusable)
