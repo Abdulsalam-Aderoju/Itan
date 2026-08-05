@@ -12,6 +12,13 @@ from pathlib import Path
 
 from engine.router.router import Router, RouteResult
 
+# Full-precision reference model for local testing. Production uses a
+# quantized ONNX export of the same base model via RetrievalEngine.embed_query()
+# (see corpus/06_embed.py) -- centroids.json's "model" field now describes that
+# production path in prose rather than naming a loadable HF repo ID, so this
+# constant intentionally doesn't read from it.
+_STANDALONE_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+
 
 class StandaloneRouter:
     def __init__(self, centroids_path: Path | str | None = None):
@@ -21,7 +28,7 @@ class StandaloneRouter:
         if centroids_path is not None:
             kwargs["centroids_path"] = centroids_path
         self._router = Router(**kwargs)
-        self._model = SentenceTransformer(self._router.model_name)
+        self._model = SentenceTransformer(_STANDALONE_MODEL_NAME)
 
     def classify(self, question_text: str) -> RouteResult:
         embedding = self._model.encode(question_text, normalize_embeddings=True)

@@ -56,7 +56,8 @@ SAFETY_KEYWORDS = (
     r"\bvet(erinary|erinarian)?\b", r"\bmy (goat|cow|chicken|sheep|dog|cat|animal)s?\b.*\b(sick|ill|stopped eating|dying|medicine)\b",
     r"\bpoison(ing|ed)?\b", r"\bstomach pain", r"\bbody pain",
     r"\bloan\b", r"\bbank\b.*\bloan\b", r"\binsurance\b",
-    r"\bweather\b", r"\brain(fall)? forecast\b",
+    r"\bweather forecast\b", r"\bwill it rain\b", r"\brain(fall)? forecast\b",
+    r"\bwhat('s| is|s) the weather\b",
     r"\bpolitical party\b", r"\belection\b",
     r"\blegal\b", r"\blawyer\b", r"\bland (dispute|ownership)\b", r"\bcontract\b",
 )

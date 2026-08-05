@@ -46,13 +46,25 @@ safety_cases = [
     "I have a fever and body pain after spraying my farm.",
     "Can you recommend a bank for an agricultural loan?",
 ]
-# note: weather questions ("will it rain next week") are deliberately NOT in
-# SAFETY_KEYWORDS -- they're an out-of-scope topic, not a health/legal/
-# financial emergency, and cross-validation confirmed the centroid
-# classifier alone handles them fine (not among the 4 CV misses).
+# note: weather-forecast questions ("will it rain next week") ARE in
+# SAFETY_KEYWORDS (as a narrow "will it rain" / "weather forecast" pattern) --
+# but a plain "\bweather\b" was here originally and false-triggered on
+# ordinary plant-pathology phrasing like "...fuzzy in humid weather"
+# (found via full-scale testing against the real production ONNX embedder,
+# eval/router/gold_questions_200_pest_diagnosis.jsonl row B058). Regression
+# test for that below: a legitimate disease-symptom question mentioning
+# weather as a description, not a forecast request, must NOT be refused.
 for q in safety_cases:
     result = router.classify(q, dummy_emb)
     check(f"safety override catches: {q[:50]!r}", result.tier == "D" and result.reason == "safety_keyword_override")
+
+not_safety_cases = [
+    "My onion shows pale yellow patches turning greyish-purple and fuzzy in humid weather. What is the problem?",
+    "My tomato wilts more in hot, dry weather than usual -- is that a disease symptom?",
+]
+for q in not_safety_cases:
+    result = router.classify(q, dummy_emb)
+    check(f"NOT falsely caught by safety override: {q[:50]!r}", result.reason != "safety_keyword_override")
 
 # --- confidence threshold behavior with synthetic embeddings ---
 # a vector identical to the A centroid should classify as A with confidence ~1.0
