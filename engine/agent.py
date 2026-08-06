@@ -176,7 +176,22 @@ def call_llm(messages: list[dict], max_tokens: int = 256, temperature: float = 0
         "temperature": temperature,
     }
     try:
-        resp = requests.post(f"{url}/v1/chat/completions", json=payload, timeout=60)
+        # 60s was too short on dev hardware: a full ~1400-token RAG context
+        # (blueprint's own cap) plus a 256-300 token generation measures out
+        # to ~80s at this machine's roofline (~29 tok/s prefill, ~9 tok/s
+        # decode -- see eval/benchmarks/submission_profiler_output.json),
+        # so most Tier B/C calls were hitting the client timeout before the
+        # server even finished, not because anything was hung. Confirmed via
+        # eval/results/itan_system_eval_results.jsonl: 5 of 8 questions in
+        # the last real run errored out this way. Target ADTC hardware
+        # (10th-12th gen i5) should be meaningfully faster per the
+        # blueprint's own roofline analysis, so this is a dev-hardware
+        # accommodation, not evidence the real submission needs 180s -- but
+        # until lookup decoding / phrase-bank speedups (blueprint Sec 8.2)
+        # are implemented, this is what makes eval runs on this hardware
+        # produce real answers instead of timeout errors.
+        timeout_s = int(os.getenv("LLAMA_CLIENT_TIMEOUT_S", "180"))
+        resp = requests.post(f"{url}/v1/chat/completions", json=payload, timeout=timeout_s)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
     except Exception as e:
