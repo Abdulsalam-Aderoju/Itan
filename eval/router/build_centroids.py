@@ -35,9 +35,17 @@ TIERS = ["A", "B", "C", "D"]
 # From build_router.py's 5-fold stratified cross-validation (see calibration_report.json
 # for the full sweep). Re-run build_router.py and update these if the gold set changes
 # enough to shift the numbers.
+#
+# NOTE: these are the CENTROID method's own numbers, not the overall best method
+# in calibration_report.json. build_router.py's cross-validation started favoring
+# k-NN (k=1, 94.6%) over centroid (92.5%) once measured with the real production
+# ONNX embedder on the expanded 240-question set -- but engine/router/router.py
+# only implements centroid comparison, so the number that actually describes what's
+# shipped is centroid's, not whichever method currently tops the comparison table.
+# If we ever want the k-NN edge, Router itself needs a k-NN mode first.
 THRESHOLD = 0.74
-CV_OVERALL_ACCURACY = 0.95
-CV_PER_TIER_RECALL = {"A": 0.9, "B": 0.97, "C": 1.0, "D": 0.8667}
+CV_OVERALL_ACCURACY = 0.925
+CV_PER_TIER_RECALL = {"A": 0.9494, "B": 0.9223, "C": 1.0, "D": 0.6471}
 
 
 def main():

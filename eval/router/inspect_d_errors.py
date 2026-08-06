@@ -1,19 +1,29 @@
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
-from sentence_transformers import SentenceTransformer
+
+# Use the REAL production embedder (RetrievalEngine.embed_query(), quantized
+# ONNX bge-small), not a separately-loaded sentence-transformers model --
+# build_router.py/build_centroids.py already made this switch after finding
+# the two pipelines' embeddings diverge enough (~0.97-0.99 cosine similarity)
+# to matter for which side of the threshold a question lands on. This script
+# was still on the old path until now, which meant its "which D-tier
+# questions get misrouted" output no longer matched what's actually shipped.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+from engine.retrieval import RetrievalEngine  # noqa: E402
 
 GOLD_PATH = str(Path(__file__).resolve().parents[1] / "datasets" / "gold_questions_200_pest_diagnosis.jsonl")
-MODEL_NAME = "BAAI/bge-small-en-v1.5"
 SEED = 42
 N_FOLDS = 5
 TIERS = ["A", "B", "C", "D"]
 
 rows = [json.loads(l) for l in open(GOLD_PATH, encoding="utf-8")]
-model = SentenceTransformer(MODEL_NAME)
+engine = RetrievalEngine()
 texts = [r["question"] for r in rows]
-embeddings = np.asarray(model.encode(texts, normalize_embeddings=True, show_progress_bar=False), dtype=np.float32)
+embeddings = np.stack([engine.embed_query(t) for t in texts]).astype(np.float32)
 
 rng = np.random.default_rng(SEED)
 by_tier = defaultdict(list)

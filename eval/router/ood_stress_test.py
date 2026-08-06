@@ -1,10 +1,15 @@
 import json
+import sys
 from pathlib import Path
 import numpy as np
-from sentence_transformers import SentenceTransformer
+
+# Real production embedder, not sentence-transformers -- see inspect_d_errors.py
+# for why that switch matters (~0.97-0.99 cosine-similarity drift between the two).
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+from engine.retrieval import RetrievalEngine  # noqa: E402
 
 GOLD_PATH = str(Path(__file__).resolve().parents[1] / "datasets" / "gold_questions_200_pest_diagnosis.jsonl")
-MODEL_NAME = "BAAI/bge-small-en-v1.5"
 TIERS = ["A", "B", "C", "D"]
 
 OOD_QUESTIONS = [
@@ -26,9 +31,9 @@ OOD_QUESTIONS = [
 ]
 
 rows = [json.loads(l) for l in open(GOLD_PATH, encoding="utf-8")]
-model = SentenceTransformer(MODEL_NAME)
+engine = RetrievalEngine()
 texts = [r["question"] for r in rows]
-ref_emb = np.asarray(model.encode(texts, normalize_embeddings=True, show_progress_bar=False), dtype=np.float32)
+ref_emb = np.stack([engine.embed_query(t) for t in texts]).astype(np.float32)
 ref_tiers = [r["tier"] for r in rows]
 
 centroids = {}
@@ -38,7 +43,7 @@ for tier in TIERS:
     centroids[tier] = c / np.linalg.norm(c)
 centroid_mat = np.stack([centroids[t] for t in TIERS])
 
-ood_emb = np.asarray(model.encode(OOD_QUESTIONS, normalize_embeddings=True, show_progress_bar=False), dtype=np.float32)
+ood_emb = np.stack([engine.embed_query(q) for q in OOD_QUESTIONS]).astype(np.float32)
 sims = ood_emb @ centroid_mat.T
 order = np.argsort(-sims, axis=1)
 
