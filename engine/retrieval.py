@@ -48,6 +48,21 @@ CROP_MATCH_BOOST = 1.5     # multiplier for a chunk tagged with a crop the query
 CROP_MISMATCH_PENALTY = 0.5  # multiplier for a chunk tagged with a DIFFERENT, specific crop
 # (chunks with no crop tag at all get neither -- see module docstring)
 
+# How many dense/BM25 candidates retrieve() pulls per side before RRF fusion,
+# as a multiple of top_k. Swept 2026-08-17 with corpus/tune_rrf.py against the
+# 50-question corpus validation set on the full 72,452-chunk index (see
+# corpus/validation_report.json):
+# fusion WEIGHTING (dense vs BM25) turned out not to matter -- equal weights
+# were already optimal -- but fusion DEPTH did: top_k*2 (the old default)
+# capped hit-rate@5 at 0.78 because the correct chunk was often outside the
+# top-8 candidates from either search alone, so RRF never got a chance to
+# consider it. top_k*8 gets to 0.92; deeper than that (top_k*10, *12) gave no
+# further improvement, so *8 is the point of diminishing returns, not an
+# arbitrary round number. Cost is negligible either way -- both searches
+# already score the whole corpus; this only changes how many top-scored ids
+# get sliced off before fusion.
+RRF_CANDIDATE_POOL_MULT = 8
+
 class RetrievalEngine:
     """Thread-safe hybrid dense+sparse retrieval engine."""
 
@@ -139,7 +154,7 @@ class RetrievalEngine:
             return []
         self._init_bm25_tokenizer()
         bm25_obj = self.bm25_data.get("bm25")
-        doc_ids = self.bm25_data.get("doc_ids", [])
+        doc_ids = self.bm25_data.get("chunk_ids", [])
         if not bm25_obj or not doc_ids:
             return []
         query_tokens = self.bm25_tokenizer(query)
@@ -195,8 +210,9 @@ class RetrievalEngine:
             except Exception:
                 query_vec = None
 
-        dense_ids = self.dense_search(query_vec, top_k=top_k * 2) if query_vec is not None else []
-        bm25_ids = self.bm25_search(query, top_k=top_k * 2)
+        pool = top_k * RRF_CANDIDATE_POOL_MULT
+        dense_ids = self.dense_search(query_vec, top_k=pool) if query_vec is not None else []
+        bm25_ids = self.bm25_search(query, top_k=pool)
 
         query_crops = self.detect_query_crops(query)
         rank_lists = [l for l in (dense_ids, bm25_ids) if l]

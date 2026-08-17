@@ -227,12 +227,15 @@ def run_retrieval_eval(df) -> dict:
     start_time = time.time()
     for i, q in enumerate(GOLD_QUESTIONS, start=1):
         try:
+            # Call the single production retrieve() path end-to-end (candidate
+            # pool depth, fusion, crop rerank all live there -- see
+            # RRF_CANDIDATE_POOL_MULT in engine/retrieval.py) rather than
+            # re-composing dense_search/bm25_search/rrf_fuse by hand here with
+            # our own pool-size choice, which is exactly the kind of drift
+            # this file's own docstring says it was rewritten to avoid.
             query_vec = engine.embed_query(q["query"]) if engine.vectors is not None else None
-            dense_ids = engine.dense_search(query_vec, top_k=TOP_K * 2) if query_vec is not None else []
-            bm25_ids = engine.bm25_search(q["query"], top_k=TOP_K * 2) if engine.bm25_data is not None else []
-            query_crops = engine.detect_query_crops(q["query"])
-            rank_lists = [l for l in (dense_ids, bm25_ids) if l]
-            fused = engine.rrf_fuse(rank_lists, top_k=TOP_K, query_crops=query_crops) if rank_lists else []
+            chunks = engine.retrieve(q["query"], top_k=TOP_K, query_vec=query_vec)
+            fused = [c["chunk_id"] for c in chunks]
             hit = is_hit(fused, df, q) if fused else False
             results.append({**q, "hit": hit, "fused_top5": fused})
             progress_line("validate", i, total, q["id"], ok=True, reason="hit" if hit else "miss")

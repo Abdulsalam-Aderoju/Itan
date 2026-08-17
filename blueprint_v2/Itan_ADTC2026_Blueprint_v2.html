@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ìtàn — ADTC 2026 Blueprint v2</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Georgia", "Cambria", serif;
+    color: #1c2b24;
+    font-size: 10.3pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .cover {
+    page-break-after: always;
+    padding-top: 30mm;
+  }
+  .kicker {
+    color: #2d6a4f;
+    letter-spacing: 2px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 46pt;
+    margin: 8px 0 4px 0;
+    color: #12261d;
+  }
+  .cover .sub {
+    font-style: italic;
+    font-size: 13pt;
+    color: #3a4a42;
+    max-width: 480px;
+    margin-bottom: 18px;
+  }
+  .meta-table {
+    border-top: 1px solid #cbd6cf;
+    border-bottom: 1px solid #cbd6cf;
+    padding: 10px 0;
+    margin-top: 10px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .meta-table td { padding: 3px 0; font-size: 10pt; vertical-align: top; }
+  .meta-table td:first-child { font-weight: 700; color: #1b4332; width: 140px; font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; letter-spacing: .5px; }
+  .diff-note {
+    margin-top: 26px;
+    font-size: 9.5pt;
+    color: #445048;
+    max-width: 500px;
+  }
+  h2 {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #12261d;
+    font-size: 16pt;
+    border-bottom: 2px solid #1b4332;
+    padding-bottom: 5px;
+    margin-top: 26px;
+    margin-bottom: 10px;
+  }
+  h2 .num { color: #2d6a4f; margin-right: 8px; }
+  h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1b4332;
+    font-size: 11.5pt;
+    margin-top: 18px;
+    margin-bottom: 6px;
+  }
+  p { margin: 6px 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0 14px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #1b4332;
+    color: #f2f5f3;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 600;
+    text-align: left;
+    padding: 5px 8px;
+    font-size: 8.5pt;
+  }
+  td {
+    border-bottom: 1px solid #dbe3de;
+    padding: 5px 8px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f5f8f6; }
+  .callout {
+    border-left: 3px solid #2d6a4f;
+    background: #eef4f0;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 9.3pt;
+  }
+  .callout b { color: #1b4332; font-family: Arial, sans-serif; }
+  .callout.warn { border-left-color: #b5651d; background: #fbf1e6; }
+  .callout.warn b { color: #8a4a13; }
+  .callout.fix { border-left-color: #3a6ea5; background: #eaf1f8; }
+  .callout.fix b { color: #244d73; }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 8.8pt; background: #eef2ef; padding: 1px 4px; border-radius: 2px; }
+  pre {
+    background: #12261d;
+    color: #dbe8de;
+    padding: 10px 12px;
+    font-size: 8.3pt;
+    font-family: "Consolas", "Menlo", monospace;
+    overflow-x: auto;
+    line-height: 1.4;
+    page-break-inside: avoid;
+  }
+  .badge { display: inline-block; font-family: Arial, sans-serif; font-size: 7.5pt; font-weight: 700; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: .3px; }
+  .badge.strong { background: #d9ead9; color: #1b4332; }
+  .badge.thin { background: #fbe6cc; color: #8a4a13; }
+  .badge.broken { background: #f6d6d6; color: #7a2020; }
+  .badge.fixed { background: #d6e6f6; color: #244d73; }
+  .footer-page {
+    position: running(footer);
+  }
+  .pagefoot {
+    font-family: Arial, sans-serif;
+    font-size: 7.5pt;
+    color: #8a978f;
+    border-top: 1px solid #dbe3de;
+    padding-top: 4px;
+    margin-top: 30px;
+  }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  .two-col { display: flex; gap: 16px; }
+  .two-col > div { flex: 1; }
+  .stat {
+    display: inline-block;
+    text-align: center;
+    margin-right: 18px;
+  }
+  .stat .n { font-family: Arial, sans-serif; font-size: 20pt; font-weight: 700; color: #1b4332; display: block; }
+  .stat .l { font-family: Arial, sans-serif; font-size: 7.5pt; color: #5a675f; text-transform: uppercase; letter-spacing: .5px; }
+  .section-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="kicker">Team Blueprint · ADTC 2026 · Revision 2</div>
+  <h1>Ìtàn</h1>
+  <div class="sub">An offline agricultural extension agent for smallholder farmers —
+  updated to reflect what the corpus actually is, not what it was planned to be.</div>
+
+  <table class="meta-table">
+    <tr><td>Challenge</td><td>African Deep Tech Challenge (ADTC) 2026</td></tr>
+    <tr><td>Domain</td><td>Agriculture — on-device language model inference</td></tr>
+    <tr><td>Supersedes</td><td><i>Itan_ADTC2026_Blueprint.pdf</i> (v1, this document does not repeat v1's rationale — read v1 first for the scoring-formula argument, tool architecture and eight-week plan, which are unchanged)</td></tr>
+    <tr><td>Reason for v2</td><td>The corpus that got built is a different shape than the one v1 specified. v2 re-grounds the plan in the actual ingested data — measured by inspecting <span class="mono">chunks.parquet</span>, <span class="mono">structured.db</span>, and this session's retrieval tests — rather than the ~10,000-chunk, six-balanced-table corpus v1 assumed.</td></tr>
+    <tr><td>Headline change</td><td>The corpus's real strength is <b>pest &amp; disease diagnosis</b> (Tier B) — deep, research-paper-sourced coverage. Its real weakness is <b>exact zone-specific facts</b> (Tier A: crop calendars, agrochemical registrations) — thin, sparse, and not yet trustworthy enough to serve uncritically. v2 repositions the product around the first and scopes down promises about the second.</td></tr>
+    <tr><td>Status</td><td>Living document — corpus and engine numbers below were measured directly from repo artifacts during a live debugging session, not projected</td></tr>
+  </table>
+
+  <div class="diff-note">
+    <b>How to read this document.</b> v2 does not re-derive the scoring-formula thesis, the tool
+    architecture, or the multilingual design — those are unchanged from v1 and still the plan.
+    v2 replaces v1's <i>projections</i> (§4, §9 of the original) with what got actually built, and
+    adds the concrete engineering issues found while manually testing retrieval this week. Where
+    a v1 claim still holds, it isn't repeated here.
+  </div>
+</div>
+
+<!-- SECTION 1 -->
+<h2><span class="num">1</span>What The Corpus Actually Is</h2>
+
+<p>v1 planned "~10,000 curated chunks" across six evenly-populated structured tables. What got
+built is larger, lumpier, and much more concentrated in one area than planned: <b>pest and
+disease content, pulled heavily from academic literature rather than extension bulletins,
+dominates everything else.</b></p>
+
+<div class="two-col">
+  <div>
+    <span class="stat"><span class="n">72,452</span><span class="l">Corpus chunks</span></span>
+    <span class="stat"><span class="n">1,529</span><span class="l">Unique sources</span></span>
+  </div>
+</div>
+
+<h3>1.1 What topic the corpus is actually about</h3>
+<table>
+  <tr><th>Topic tag</th><th>Chunks</th><th>Share</th><th>Read</th></tr>
+  <tr><td>unclassified</td><td>16,139</td><td>22.3%</td><td>Topic classifier gap, not corpus content — see §5.2</td></tr>
+  <tr><td>market</td><td>11,214</td><td>15.5%</td><td>Price/value-chain content — not one of the blueprint's Tier A/B categories, currently unused</td></tr>
+  <tr><td><b>disease_management</b></td><td><b>9,740</b></td><td><b>13.4%</b></td><td rowspan="2"><b>16,427 chunks combined — the single largest well-classified category in the whole corpus, and larger than crop_calendar + spacing + agrochemical + variety combined by more than 30×</b></td></tr>
+  <tr><td><b>pest_management</b></td><td><b>6,687</b></td><td><b>9.2%</b></td></tr>
+  <tr><td>fertilisation</td><td>8,309</td><td>11.5%</td><td>Second-strongest category</td></tr>
+  <tr><td>soil_management</td><td>7,504</td><td>10.4%</td><td>&nbsp;</td></tr>
+  <tr><td>irrigation</td><td>4,048</td><td>5.6%</td><td>&nbsp;</td></tr>
+  <tr><td>variety_selection</td><td>3,183</td><td>4.4%</td><td>&nbsp;</td></tr>
+  <tr><td>harvest</td><td>2,545</td><td>3.5%</td><td>&nbsp;</td></tr>
+  <tr><td>planting</td><td>2,152</td><td>3.0%</td><td>Thin relative to how often Tier A planting-window questions will be asked</td></tr>
+  <tr><td>storage</td><td>931</td><td>1.3%</td><td>Thinnest category with real content</td></tr>
+</table>
+
+<div class="callout">
+  <b>Reading this straight.</b> The corpus was not built evenly against the blueprint's six
+  target tables. It was built by whatever was available to harvest, and what was available
+  skewed hard toward pest/disease research literature. That's not a defect to apologize for —
+  it's a genuine asset. <b>The positioning in §4 leans into it instead of pretending the corpus
+  is the balanced extension-bulletin library v1 pictured.</b>
+</div>
+
+<h3>1.2 Crop coverage (all ten target crops present, unevenly)</h3>
+<table>
+  <tr><th>Crop</th><th>Chunks</th><th>Crop</th><th>Chunks</th></tr>
+  <tr><td>Maize</td><td>13,537</td><td>Groundnut</td><td>3,853</td></tr>
+  <tr><td>Rice</td><td>7,664</td><td>Soybean</td><td>3,495</td></tr>
+  <tr><td>Cassava</td><td>5,895</td><td>Cowpea</td><td>3,305</td></tr>
+  <tr><td>Sorghum</td><td>4,884</td><td>Yam</td><td>2,848</td></tr>
+  <tr><td>Tomato</td><td>4,566</td><td>Pepper</td><td>1,585</td></tr>
+</table>
+<p>33,849 of 72,452 chunks (47%) carry no crop tag at all — mostly crop-agnostic guidance
+(general pest-control principles, soil chemistry) rather than a tagging failure, per spot-checks,
+but not verified exhaustively.</p>
+
+<h3>1.3 The structured knowledge base — six tables, three real, one nearly empty</h3>
+<p>v1's Tier A design (§3.3 of v1) assumes exact facts come from clean SQL rows the model
+recites without alteration. That guarantee is only as good as the rows underneath it. Measured
+directly from <span class="mono">corpus/structured.db</span>:</p>
+
+<table>
+  <tr><th>Table</th><th>Rows</th><th>% flagged<br><span class="mono">needs_review</span></th><th>Avg confidence</th><th>Verdict</th></tr>
+  <tr><td><b>pest</b></td><td>14,369</td><td>99.5%</td><td>0.399</td><td><span class="badge broken">volume, unverified</span></td></tr>
+  <tr><td>fertilizer_rate</td><td>3,025</td><td>95.4%</td><td>0.602</td><td><span class="badge broken">volume, unverified</span></td></tr>
+  <tr><td>spacing</td><td>425</td><td>33.2%</td><td>0.734</td><td><span class="badge thin">usable, thin</span></td></tr>
+  <tr><td>variety</td><td>263</td><td>20.2%</td><td>0.735</td><td><span class="badge thin">usable, thin</span></td></tr>
+  <tr><td>crop_calendar</td><td>60</td><td>11.7%</td><td>0.832</td><td><span class="badge thin">highest quality, far too thin</span></td></tr>
+  <tr><td>agrochemical</td><td>1</td><td>0%</td><td>0.750</td><td><span class="badge broken">effectively unbuilt</span></td></tr>
+</table>
+
+<div class="callout warn">
+  <b>The number that matters most in this document.</b> 99.5% of the <span class="mono">pest</span>
+  table's 14,369 auto-extracted rows are flagged <span class="mono">needs_review</span>, with a
+  mean confidence of 0.399. Serving these directly as Tier A "the model never sees a prompt
+  asking for a value, so it cannot invent one" facts would replace one hallucination risk
+  (the model guessing) with another (an unreviewed extraction pipeline guessing, presented with
+  Tier A's full certainty). v1's Tier A design assumed a hand-curated table; what actually got
+  built is a bulk auto-extraction with confidence scores attached but rarely acted on.
+</div>
+
+<div class="callout fix">
+  <b>Good news: this is already partly mitigated, just not documented.</b>
+  <span class="mono">engine/tools/pest_lookup/build_db.py</span> and
+  <span class="mono">engine/tools/crop_calendar/build_db.py</span> already build a curated,
+  deduplicated view for the tools to actually query — <span class="mono">pest_lookup.db</span>
+  holds 192 grouped entries (from the 14,369 raw rows, taking max confidence per symptom
+  cluster) and <span class="mono">crop_calendar.db</span> holds 22 (from 60). The tools are not
+  currently exposed to the raw noise. What's missing is (a) making this the documented, explicit
+  design decision rather than an implicit side effect of how the build scripts happen to work,
+  and (b) applying the same curation pass to <span class="mono">fertilizer_rate</span>, which
+  has no equivalent curated/deduplicated table yet and is queried closer to raw.
+</div>
+
+<h2 class="section-break"><span class="num">2</span>What Retrieval Actually Does</h2>
+
+<p>v1 positions retrieval as a solved hybrid dense+BM25 pipeline (§3.1, §3.4 of v1: "Hybrid over
+pure dense — rare agronomic proper nouns are poorly represented in small embedders"). Manually
+querying <span class="mono">engine.retrieval.RetrievalEngine</span> this week surfaced two bugs
+that mean that description hasn't matched the running code.</p>
+
+<h3>2.1 BM25 was silently dead on every query</h3>
+<p><span class="mono">engine/retrieval.py</span>'s <span class="mono">bm25_search()</span> read
+the sparse index with <span class="mono">self.bm25_data.get("doc_ids", [])</span>. The index
+builder, <span class="mono">corpus/07_bm25.py</span>, pickles the field as
+<span class="mono">"chunk_ids"</span>, not <span class="mono">"doc_ids"</span>. The mismatched
+key meant <span class="mono">doc_ids</span> was always empty, which tripped a guard clause and
+made <span class="mono">bm25_search()</span> return <span class="mono">[]</span> on every call,
+silently. <b>Every query this system has ever answered in testing has been dense-only</b>,
+despite "hybrid" being the architecture's Pillar 1. Fixed
+(<span class="mono">engine/retrieval.py:142</span>).</p>
+
+<h3>2.2 54% of the corpus was unreachable by either search path — fixed</h3>
+<table>
+  <tr><th>Artifact</th><th>Chunks indexed, before</th><th>Chunks indexed, after re-embed</th></tr>
+  <tr><td><span class="mono">chunks.parquet</span></td><td>72,452</td><td>72,452</td></tr>
+  <tr><td><span class="mono">vectors.npy</span></td><td>33,342</td><td>72,452</td></tr>
+  <tr><td><span class="mono">bm25.pkl</span></td><td>33,342</td><td>72,452</td></tr>
+</table>
+<div class="callout fix">
+  <b>Fixed.</b> <span class="mono">corpus/06_embed.py</span> and <span class="mono">corpus/07_bm25.py</span>
+  were re-run against the current <span class="mono">chunks.parquet</span>. Confirmed directly
+  afterward: zero chunk IDs orphaned in either direction across all three artifacts — every chunk
+  in the corpus now has both a dense vector and a BM25 entry.
+</div>
+
+<h3>2.3 The real lever was candidate-pool depth, not fusion weight</h3>
+<p>With full coverage restored, the natural next question was whether the dense/BM25 fusion
+weighting needed correcting — the earlier (stale-index) measurement showed hybrid scoring worse
+than dense-only, which read like a weighting problem. A weight sweep against the 50-question
+validation set (<span class="mono">corpus/tune_rrf.py</span>, checked into the repo) said otherwise:</p>
+<table>
+  <tr><th>Fusion weight (dense : BM25)</th><th>Hit Rate@5, full corpus</th></tr>
+  <tr><td>1.0 : 0.0 (dense-only)</td><td>0.78</td></tr>
+  <tr><td>0.0 : 1.0 (BM25-only)</td><td>0.88</td></tr>
+  <tr><td>1.0 : 0.5</td><td>0.90</td></tr>
+  <tr><td><b>1.0 : 1.0 (plain, unweighted — no change needed)</b></td><td><b>0.92</b></td></tr>
+  <tr><td>1.0 : 1.5 / 1.0 : 2.0</td><td>0.90</td></tr>
+</table>
+<p>Equal weighting was already the best configuration — de-weighting BM25 (the fix the earlier,
+stale-index number seemed to call for) would have made things <i>worse</i> now that coverage is
+fixed. The actual gap was candidate-pool depth: <span class="mono">retrieve()</span> only pulled
+<span class="mono">top_k*2</span> (8) candidates per search path before fusion, so on many
+questions the correct chunk was outside the pool RRF ever got to consider, regardless of how the
+fusion math weighted it. Sweeping pool depth at fixed 1:1 weighting:</p>
+<table>
+  <tr><th>Candidate pool (× top_k)</th><th>Hit Rate@5</th></tr>
+  <tr><td>×1 (5 candidates/side)</td><td>0.78</td></tr>
+  <tr><td>×2 (10 — the old default)</td><td>0.78</td></tr>
+  <tr><td>×4 (20)</td><td>0.88</td></tr>
+  <tr><td><b>×8 (40)</b></td><td><b>0.92</b></td></tr>
+  <tr><td>×10 / ×12</td><td>0.92 (no further gain)</td></tr>
+</table>
+<div class="callout fix">
+  <b>Shipped: <span class="mono">RRF_CANDIDATE_POOL_MULT = 8</span></b> in
+  <span class="mono">engine/retrieval.py</span>. ×8 is the point of diminishing returns, not an
+  arbitrary round number — ×10 and ×12 gave no further improvement in this sweep. Cost is
+  negligible: both dense and BM25 search already score against the whole corpus; this only
+  changes how many top-scored candidates get sliced off before fusion runs.
+</div>
+
+<h3>2.4 A second instance of the same class of bug, caught while verifying the fix</h3>
+<p>Re-running <span class="mono">corpus/08_validate.py</span> after the pool-depth fix initially
+still reported 0.78, not 0.92. Cause: the validation harness didn't call
+<span class="mono">RetrievalEngine.retrieve()</span> at all — it hand-recomposed
+<span class="mono">dense_search()</span> + <span class="mono">bm25_search()</span> +
+<span class="mono">rrf_fuse()</span> with its own hardcoded <span class="mono">TOP_K * 2</span>
+pool size, independent of whatever <span class="mono">retrieve()</span> did. This is the exact
+class of drift the file's own docstring says a previous rewrite was meant to eliminate ("one
+engine, one set of numbers, always in sync by construction") — it just resurfaced one layer down,
+in a parameter instead of a whole duplicated method. Fixed by having the harness call
+<span class="mono">engine.retrieve()</span> directly rather than re-deriving its internals.
+<b>Lesson for the rest of the codebase:</b> any place that reconstructs pieces of
+<span class="mono">RetrievalEngine</span>'s pipeline instead of calling
+<span class="mono">retrieve()</span> is a latent version of this same bug, waiting for the next
+tuning change to silently stop applying to it.</p>
+
+<h3>2.5 Retrieval gaps that are corpus-shape, not bugs</h3>
+<table>
+  <tr><th>Gap</th><th>Measured (full corpus, tuned pool depth)</th></tr>
+  <tr><td>All six named agro-ecological zones</td><td>Still 0% hit rate@5, every zone — unchanged by either fix</td></tr>
+  <tr><td>Per-crop gaps</td><td><b>Resolved</b> — every one of the ten target crops now ≥60%; cassava, the last remaining gap, went 50%→83.3%</td></tr>
+  <tr><td>Variety selection tier</td><td>60% — now the weakest tier (was previously masked by the coverage/pool bugs); worth attention next</td></tr>
+  <tr><td>Pest/disease diagnosis tier</td><td>95% — fertiliser_rate close behind at 93.3%, crop_management_storage at 100%</td></tr>
+</table>
+<p>Zone-specific answers (§3.3 of v1's Tier A: "Maize window in Oyo") remain unsupportable —
+this was never an engine bug. The corpus doesn't carry consistent zone-tagged content, and
+<span class="mono">crop_calendar</span> has only 60 rows total, most with empty zone/state
+fields. Both engine fixes above left this gap exactly where it was, which is itself useful
+confirmation that it's a corpus-content gap and not a retrieval-tuning one, per §4.4.</p>
+
+<h3>2.6 A concrete worked example, kept for the record</h3>
+<p>Query: <i>"My maize shows: ragged holes in the leaves and sawdust-like frass packed in the
+whorl. What is the problem and how should I treat it?"</i> — gold answer: fall armyworm,
+emamectin benzoate / chlorantraniliprole.</p>
+<p>Before either fix, the top-4 returned stem-borer content (a different pest, overlapping
+symptom vocabulary) and an off-topic maize-streak-virus chunk — despite the corpus holding 398
+chunks that mention "fall armyworm" by name, including a chunk from a paper titled
+<i>"Streamlining leaf damage rating scales for the fall armyworm on maize,"</i> correctly tagged
+<span class="mono">crop=maize, topic=pest_management</span>. After the BM25 key fix alone, a
+chunk from that same paper became the #1 result. After the full re-embed and pool-depth fix, all
+four returned chunks are maize + pest_management/unclassified — a clean, focused result set with
+no off-topic content at all.</p>
+
+<h2 class="section-break"><span class="num">3</span>Everything Else, Status Unchanged From v1's "Known Issues"</h2>
+<p>Not re-measured this session; listed here so this document is a complete current-state
+snapshot rather than requiring a cross-reference back to v1 or README.md.</p>
+<table>
+  <tr><th>Item</th><th>Status</th></tr>
+  <tr><td>Model weights</td><td><span class="badge broken">not downloaded</span> — <span class="mono">model/</span> has only a README; <span class="mono">download_model.sh</span> not yet run</td></tr>
+  <tr><td>llama.cpp / <span class="mono">llama-server</span></td><td><span class="badge broken">not present</span> — no binary in repo or on this machine; nothing requiring the LLM has run end-to-end</td></tr>
+  <tr><td>UI (Tauri + React, telemetry panel)</td><td><span class="badge broken">not started</span> — no <span class="mono">ui/</span> directory exists</td></tr>
+  <tr><td>Thermal governor</td><td><span class="badge broken">not started</span></td></tr>
+  <tr><td>Lookup decoding + phrase bank</td><td><span class="badge broken">not started</span> — v1 calls this "the sharpest speed technique available," still unimplemented</td></tr>
+  <tr><td>LoRA fine-tune</td><td><span class="badge broken">not started</span> — explicitly cuttable per v1, lowest priority by design</td></tr>
+  <tr><td>Router (Tier A/B/C/D classifier)</td><td><span class="badge strong">92.7% cross-validated accuracy</span>, 220 gold questions, 5-fold. Weakest tier: D (refusal) recall at 64.7% even with the best method — refusal calibration is the one part of the router still meaningfully under-performing</td></tr>
+  <tr><td>Tools (<span class="mono">agri_calc</span>)</td><td><span class="badge strong">implemented</span>, 120 unit tests present matching v1's target exactly</td></tr>
+  <tr><td>Tools (<span class="mono">crop_calendar</span>, <span class="mono">pest_lookup</span>)</td><td><span class="badge thin">implemented, thin test coverage</span> — 16 and 15 test cases respectively, well under the <span class="mono">agri_calc</span> bar</td></tr>
+  <tr><td>Language normalisation lexicon</td><td><span class="badge thin">~70 terms currently</span> vs v1's ~1,200-term target</td></tr>
+  <tr><td>Profiler compatibility run</td><td>One historical run on record (<span class="mono">eval/benchmarks/submission_profiler_output.json</span>): 8.73 TPS, 17.7s time-to-first-token, 1.72GB peak RSS. Predates the router/retrieval fixes in this document and can't be reproduced right now without model weights + llama.cpp — treat as stale, not current.</td></tr>
+</table>
+
+<h2 class="section-break"><span class="num">4</span>Repositioning — What v2 Actually Changes</h2>
+
+<p>v1's one-sentence pitch promised parity across pest ID, fertiliser dosing, planting calendars,
+spray dilution and margins. The corpus that got built doesn't support that evenly, and pretending
+otherwise in front of judges who will specifically probe zone-specific and product-specific
+claims (v1 §5.2's own worked example is exactly this kind of probe) is a worse strategy than
+being precise about where the depth actually is.</p>
+
+<h3>4.1 Revised one-sentence pitch</h3>
+<div class="callout">
+<i>Ìtàn is an offline pest-and-disease diagnostic agent for smallholder maize, cassava, rice,
+sorghum and tomato farmers — grounded in 16,000+ chunks of primary agronomic literature, citing
+its sources, refusing when it isn't sure — with fertiliser dosing, seed-rate and margin
+calculation as deterministic Python tools layered on top.</i>
+</div>
+<p>This is narrower than v1's pitch. It is also true, measurable, and defensible under judge
+questioning in a way the broader claim currently is not.</p>
+
+<h3>4.2 Tier A needs a confidence gate, documented as a design decision</h3>
+<p>Add to v1 §3.3: a Tier A query only resolves directly to SQL if the underlying row's
+<span class="mono">confidence</span> is above a threshold (the curated
+<span class="mono">pest_lookup.db</span>/<span class="mono">crop_calendar.db</span> pattern
+already does an implicit version of this — make it explicit, apply the same treatment to
+<span class="mono">fertilizer_rate</span>, and route anything below threshold to Tier B
+retrieval + honest sourcing instead of presenting an unreviewed extraction as a certain fact).</p>
+
+<h3>4.3 Lead the demo and the video with pest diagnosis, not fertiliser calculation</h3>
+<p>v1's two-minute video plan (§13.2) opens on a fertiliser question. Given where the corpus's
+actual strength sits, opening on a pest/disease diagnosis question — ideally the fall-armyworm
+case in §2.6, since it's a real, reproducible, verifiable example with a citation trail already
+confirmed — better demonstrates the system's genuine depth. Keep the fertiliser tool-calling
+example (v1's "0.6 hectares... urea" question) as the second beat, since that demonstrates the
+tool-calling pillar, which is a separate strength from retrieval depth.</p>
+
+<h3>4.4 Scope zone-specific and agrochemical-specific claims down until the data supports them</h3>
+<p>Do not claim zone-specific planting windows (v1's flagship Tier A example, "Maize window in
+Oyo") or registered-product PHI lookups (agrochemical table: 1 row) as core features in judge-facing
+material until <span class="mono">crop_calendar</span> and <span class="mono">agrochemical</span>
+get a real curation pass. Both are cuttable-if-thin per v1's own cut order (§10.4) — this is that
+principle being applied honestly rather than the promise being kept in the pitch while the data
+underneath quietly isn't there.</p>
+
+<h2 class="section-break"><span class="num">5</span>Status &amp; Immediate Next Steps</h2>
+
+<h3>5.1 Done since the numbers in §1–§2 were first measured</h3>
+<table>
+  <tr><th>Item</th><th>Result</th></tr>
+  <tr><td>Re-embed full corpus (<span class="mono">06_embed.py</span> + <span class="mono">07_bm25.py</span>)</td><td><span class="badge strong">done</span> — 100% coverage, 72,452/72,452 chunks in both indices</td></tr>
+  <tr><td>RRF fusion weight/pool-depth tuning</td><td><span class="badge strong">done</span> — equal weighting confirmed optimal; the real fix was <span class="mono">RRF_CANDIDATE_POOL_MULT=8</span> (§2.3)</td></tr>
+  <tr><td>Re-run <span class="mono">corpus/08_validate.py</span></td><td><span class="badge strong">done</span> — <b>0.92 hit-rate@5</b>, corrected to call <span class="mono">retrieve()</span> directly (§2.4)</td></tr>
+</table>
+<p>Hit-rate@5 progression across this debugging session, all on the same 50-question set:
+<span class="mono">0.86 (dense-only, stale, mislabeled hybrid) → 0.60 (hybrid wired, still stale) →
+0.78 (coverage fixed) → 0.92 (pool depth fixed)</span>. 0.92 is the number to cite going forward.</p>
+
+<h3>5.2 Still open</h3>
+<ol>
+  <li><b>Wire the language normalisation layer into retrieval</b> — <span class="mono">engine/agent.py</span>
+  computes <span class="mono">norm_q</span> but passes the raw, un-normalised question into both
+  the embedding call (in <span class="mono">server.py</span>) and
+  <span class="mono">retrieval_engine.retrieve()</span>; the lexicon currently has no effect on
+  what gets searched.</li>
+  <li><b>Investigate the variety-selection tier</b> — now the weakest at 60% hit-rate (§2.5),
+  a gap that was previously masked by the coverage and pool-depth bugs rather than a new
+  regression.</li>
+  <li><b>Apply confidence gating to <span class="mono">fertilizer_rate</span></b> the way
+  <span class="mono">pest_lookup</span> and <span class="mono">crop_calendar</span> already do
+  (§1.3, §4.2).</li>
+  <li><b>Audit for the same class of bug found in §2.4</b> — anywhere else in the codebase that
+  reconstructs pieces of <span class="mono">RetrievalEngine</span>'s pipeline by hand instead of
+  calling <span class="mono">retrieve()</span> is carrying the same silent-drift risk that hid
+  the pool-depth fix from validation the first time it was re-run.</li>
+  <li><b>Download model weights and build/obtain llama.cpp</b> — nothing past retrieval has been
+  exercised end-to-end; this blocks router-to-answer testing, the profiler run, and the demo
+  video.</li>
+</ol>
+
+<div class="pagefoot">Ìtàn · ADTC 2026 Team Blueprint v2 — supersedes only where noted; v1 remains the reference for architecture, scoring-formula thesis and build plan</div>
+
+</body>
+</html>
