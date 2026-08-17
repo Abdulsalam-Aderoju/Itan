@@ -330,19 +330,24 @@ chance against this document.</p>
   crop X."</i>
 </div>
 
-<div class="callout warn">
-  <b>Not fixed — the data is still not reachable by anything live.</b> Checked every place that
-  queries <span class="mono">structured.db</span>: <span class="mono">engine/agent.py</span>'s
-  <span class="mono">query_structured_db()</span> (the Tier A path) reads
+<div class="callout fix">
+  <b>Also fixed — wired into a live query path.</b> Checked every place that queries
+  <span class="mono">structured.db</span>: <span class="mono">engine/agent.py</span>'s
+  <span class="mono">query_structured_db()</span> (the Tier A path) read
   <span class="mono">spacing</span>, <span class="mono">fertilizer_rate</span>, and
-  <span class="mono">pest</span> — never <span class="mono">agrochemical</span>. The
-  <span class="mono">agri_calc</span> tool's <span class="mono">spray_dilution()</span> reads a
-  completely separate, hand-seeded 8-row database
-  (<span class="mono">engine/tools/agri_calc/agri_calc.db</span>, built by
-  <span class="mono">seed_real_db.py</span>) and was not touched by this change. So the 409 rows
-  are now correct and real, but currently orphaned — no code path serves them to a farmer yet.
-  Wiring them in (a Tier A query path, or a small dedicated lookup tool matching branded product
-  names against a farmer's phrasing) is separate follow-up work.
+  <span class="mono">pest</span> — never <span class="mono">agrochemical</span>. Added a new block:
+  unlike every other table there (crop-keyed), the NAFDAC register has no crop column, so it's
+  matched by testing each significant word in the question against
+  <span class="mono">product_name</span>/<span class="mono">active_ingredient</span> in turn,
+  stopping at the first word that matches anything (so an unrelated later word in a long question
+  can't pull in noise once a real match is found), restricted to
+  <span class="mono">needs_review='0'</span> rows. Verified against real questions ("is glyphosate
+  registered for use in Nigeria?" → 3 matches including BARASATE LIQUID and CLEARWEED; "what is the
+  active ingredient in Actellic?" → the correct PRIMIPHOSMETHYL-250G/L record). All 120
+  <span class="mono">agri_calc</span> tests still pass (untouched — <span class="mono">
+  spray_dilution()</span> still reads its own separate, hand-seeded 8-row database, built by
+  <span class="mono">seed_real_db.py</span>, unrelated to this fix and still limited to that small
+  example set).
 </div>
 
 <p>Two more documents were found sitting in <span class="mono">corpus/raw/manual/</span> worth
@@ -539,6 +544,7 @@ underneath quietly isn't there.</p>
   <tr><td>Re-run <span class="mono">corpus/08_validate.py</span></td><td><span class="badge strong">done</span> — <b>0.92 hit-rate@5</b>, corrected to call <span class="mono">retrieve()</span> directly (§2.4)</td></tr>
   <tr><td>Empty-content gate for <span class="mono">pest_lookup.db</span></td><td><span class="badge strong">done</span> — 140/192 (73%) phantom-match records dropped; 75 remain, all 15 existing tests pass (§1.4)</td></tr>
   <tr><td>Load NAFDAC pesticide register into <span class="mono">agrochemical</span></td><td><span class="badge strong">done</span> — 1 → 409 real rows via new <span class="mono">corpus/harvest/07_nafdac_load.py</span>, wired into <span class="mono">run_pipeline.sh</span> (§1.5)</td></tr>
+  <tr><td>Wire <span class="mono">agrochemical</span> into a live query path</td><td><span class="badge strong">done</span> — <span class="mono">query_structured_db()</span> now matches question words against product_name/active_ingredient (product/active-ingredient keyed, unlike every other table it queries); verified against real questions ("is glyphosate registered", "active ingredient in Actellic"), all 120 agri_calc tests still pass</td></tr>
 </table>
 <p>Hit-rate@5 progression across this debugging session, all on the same 50-question set:
 <span class="mono">0.86 (dense-only, stale, mislabeled hybrid) → 0.60 (hybrid wired, still stale) →
@@ -569,12 +575,6 @@ underneath quietly isn't there.</p>
   reconstructs pieces of <span class="mono">RetrievalEngine</span>'s pipeline by hand instead of
   calling <span class="mono">retrieve()</span> is carrying the same silent-drift risk that hid
   the pool-depth fix from validation the first time it was re-run.</li>
-  <li><b>Wire the <span class="mono">agrochemical</span> table into a live query path</b> (§1.5)
-  — 409 real, clean rows exist in <span class="mono">structured.db</span> but nothing queries
-  them: not <span class="mono">query_structured_db()</span>'s Tier A path, not
-  <span class="mono">spray_dilution()</span> (which reads a separate hand-seeded database
-  entirely). Needs either a dedicated lookup tool or extending
-  <span class="mono">query_structured_db()</span>.</li>
   <li><b>Parse the second NAFDAC register</b> —
   <span class="mono">List-of-Registered-Animal-Health-Products-and-Agrochemicals.pdf</span> (§1.5)
   is the same borderless-table structure as the pesticide register was before its dedicated

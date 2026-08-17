@@ -145,6 +145,36 @@ def query_structured_db(question: str) -> tuple[str, list[str]]:
                 if r['source_id']:
                     source_ids.append(str(r['source_id']))
 
+            # Agrochemical registration lookup -- product/active-ingredient
+            # keyed (the NAFDAC register has no crop column), unlike every
+            # other table here. Try each significant word in the question
+            # against product_name/active_ingredient in turn and stop at the
+            # first word that matches anything, so an unrelated later word
+            # in a long question can't pull in noise once a real match is
+            # found. needs_review='0' only -- see build/07_nafdac_load.py.
+            AGROCHEM_STOPWORDS = {
+                "about", "apply", "could", "crops", "doses", "farmer", "field",
+                "plant", "please", "should", "spray", "these", "those", "which",
+                "would", target_crop,
+            }
+            question_words = [
+                w for w in re.findall(r"[a-zA-Z]{5,}", q_lower)
+                if w not in AGROCHEM_STOPWORDS
+            ]
+            for word in question_words:
+                rows = cursor.execute(
+                    "SELECT * FROM agrochemical WHERE (product_name LIKE ? OR "
+                    "active_ingredient LIKE ?) AND needs_review = '0' LIMIT 3",
+                    (f"%{word}%", f"%{word}%"),
+                ).fetchall()
+                if not rows:
+                    continue
+                for r in rows:
+                    facts.append(f"NAFDAC registration record: {r['raw_text']}")
+                    if r['source_id']:
+                        source_ids.append(str(r['source_id']))
+                break
+
             conn.close()
         except Exception:
             logging.getLogger("itan.agent").exception(
