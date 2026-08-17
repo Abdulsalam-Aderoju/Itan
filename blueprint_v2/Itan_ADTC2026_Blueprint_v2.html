@@ -237,8 +237,9 @@ directly from <span class="mono">corpus/structured.db</span>:</p>
   <tr><td>spacing</td><td>425</td><td>33.2%</td><td>0.734</td><td><span class="badge thin">usable, thin</span></td></tr>
   <tr><td>variety</td><td>263</td><td>20.2%</td><td>0.735</td><td><span class="badge thin">usable, thin</span></td></tr>
   <tr><td>crop_calendar</td><td>60</td><td>11.7%</td><td>0.832</td><td><span class="badge thin">highest quality, far too thin</span></td></tr>
-  <tr><td>agrochemical</td><td>1</td><td>0%</td><td>0.750</td><td><span class="badge broken">effectively unbuilt</span></td></tr>
+  <tr><td>agrochemical</td><td>409*</td><td>6.6%*</td><td>0.93*</td><td><span class="badge fixed">real data, not yet wired in</span></td></tr>
 </table>
+<p style="font-size:8.5pt;color:#5a675f">* Updated 2026-08-17 — see §1.5. The "1 row, effectively unbuilt" figures above the asterisk describe every OTHER table as measured; agrochemical specifically has since changed.</p>
 
 <div class="callout warn">
   <b>The number that matters most in this document.</b> 99.5% of the <span class="mono">pest</span>
@@ -301,6 +302,57 @@ confidence score says.</p>
 <span class="mono">crop_calendar.db</span> (22 records from 60 raw rows) and should be assumed to
 carry a similar risk until checked the same way. <span class="mono">fertilizer_rate</span> has no
 curated table at all yet and is queried closer to raw — same class of risk, unaudited.</p>
+
+<h3>1.5 The agrochemical table: real harvested data was sitting completely unused</h3>
+<p>Found while checking what else in <span class="mono">corpus/harvest/</span> might carry the
+same kind of gap as pest_lookup. <span class="mono">corpus/harvest/06_nafdac_pdf_extract.py</span>
+already existed — a dedicated word-position table parser for the actual NAFDAC pesticide
+register PDF (a borderless table; generic <span class="mono">pdfplumber</span> text extraction
+scrambles it into column-major garbage, which is exactly why a dedicated parser was written) —
+and had already produced <span class="mono">corpus/harvest/nafdac_pesticide_register.csv</span>:
+409 clean rows of product name, active ingredient, NAFDAC registration number, registration/expiry
+dates, applicant, and manufacturer. Nothing loaded it into <span class="mono">structured.db</span>.
+The <span class="mono">agrochemical</span> table's "1 row" came entirely from
+<span class="mono">05_structure_extract.py</span>'s generic prose regex, which never had a real
+chance against this document.</p>
+
+<div class="callout fix">
+  <b>Fixed.</b> New <span class="mono">corpus/harvest/07_nafdac_load.py</span> loads the CSV into
+  <span class="mono">structured.db</span>'s <span class="mono">agrochemical</span> table (409
+  rows; 382 "trusted," 27 flagged <span class="mono">needs_review</span> for source-PDF
+  font/encoding corruption the parser itself already detected) and the original 1-row phantom
+  entry was deleted. Wired into <span class="mono">corpus/run_pipeline.sh</span> as a proper
+  stage, running after <span class="mono">05_structure_extract.py</span> (which does
+  <span class="mono">DROP TABLE</span>/<span class="mono">CREATE TABLE</span> on every run, so
+  order matters). <b>Important limit:</b> the NAFDAC register is an approval list only — no crop,
+  application rate, or pre-harvest-interval data. It answers <i>"is this product registered in
+  Nigeria, and what's its active ingredient"</i>; it does not answer <i>"what rate should I use on
+  crop X."</i>
+</div>
+
+<div class="callout warn">
+  <b>Not fixed — the data is still not reachable by anything live.</b> Checked every place that
+  queries <span class="mono">structured.db</span>: <span class="mono">engine/agent.py</span>'s
+  <span class="mono">query_structured_db()</span> (the Tier A path) reads
+  <span class="mono">spacing</span>, <span class="mono">fertilizer_rate</span>, and
+  <span class="mono">pest</span> — never <span class="mono">agrochemical</span>. The
+  <span class="mono">agri_calc</span> tool's <span class="mono">spray_dilution()</span> reads a
+  completely separate, hand-seeded 8-row database
+  (<span class="mono">engine/tools/agri_calc/agri_calc.db</span>, built by
+  <span class="mono">seed_real_db.py</span>) and was not touched by this change. So the 409 rows
+  are now correct and real, but currently orphaned — no code path serves them to a farmer yet.
+  Wiring them in (a Tier A query path, or a small dedicated lookup tool matching branded product
+  names against a farmer's phrasing) is separate follow-up work.
+</div>
+
+<p>Two more documents were found sitting in <span class="mono">corpus/raw/manual/</span> worth
+flagging while looking at this: <span class="mono">List-of-Registered-Animal-Health-Products-and-Agrochemicals.pdf</span>
+(a second real NAFDAC register, 2016-2018, same borderless-table structure as the pesticide
+register — currently only generically prose-extracted, same fix pattern applies) and
+<span class="mono">DOSSIER.pdf</span> (a 2023 HOMEF report on registered vs. unregistered
+pesticides in the Nigerian market — narrative, not tabular, would need different handling, but
+potentially valuable for cross-referencing banned/restricted products). Neither has been acted
+on — filed as follow-up.</p>
 
 <h2 class="section-break"><span class="num">2</span>What Retrieval Actually Does</h2>
 
@@ -486,6 +538,7 @@ underneath quietly isn't there.</p>
   <tr><td>RRF fusion weight/pool-depth tuning</td><td><span class="badge strong">done</span> — equal weighting confirmed optimal; the real fix was <span class="mono">RRF_CANDIDATE_POOL_MULT=8</span> (§2.3)</td></tr>
   <tr><td>Re-run <span class="mono">corpus/08_validate.py</span></td><td><span class="badge strong">done</span> — <b>0.92 hit-rate@5</b>, corrected to call <span class="mono">retrieve()</span> directly (§2.4)</td></tr>
   <tr><td>Empty-content gate for <span class="mono">pest_lookup.db</span></td><td><span class="badge strong">done</span> — 140/192 (73%) phantom-match records dropped; 75 remain, all 15 existing tests pass (§1.4)</td></tr>
+  <tr><td>Load NAFDAC pesticide register into <span class="mono">agrochemical</span></td><td><span class="badge strong">done</span> — 1 → 409 real rows via new <span class="mono">corpus/harvest/07_nafdac_load.py</span>, wired into <span class="mono">run_pipeline.sh</span> (§1.5)</td></tr>
 </table>
 <p>Hit-rate@5 progression across this debugging session, all on the same 50-question set:
 <span class="mono">0.86 (dense-only, stale, mislabeled hybrid) → 0.60 (hybrid wired, still stale) →
@@ -516,6 +569,18 @@ underneath quietly isn't there.</p>
   reconstructs pieces of <span class="mono">RetrievalEngine</span>'s pipeline by hand instead of
   calling <span class="mono">retrieve()</span> is carrying the same silent-drift risk that hid
   the pool-depth fix from validation the first time it was re-run.</li>
+  <li><b>Wire the <span class="mono">agrochemical</span> table into a live query path</b> (§1.5)
+  — 409 real, clean rows exist in <span class="mono">structured.db</span> but nothing queries
+  them: not <span class="mono">query_structured_db()</span>'s Tier A path, not
+  <span class="mono">spray_dilution()</span> (which reads a separate hand-seeded database
+  entirely). Needs either a dedicated lookup tool or extending
+  <span class="mono">query_structured_db()</span>.</li>
+  <li><b>Parse the second NAFDAC register</b> —
+  <span class="mono">List-of-Registered-Animal-Health-Products-and-Agrochemicals.pdf</span> (§1.5)
+  is the same borderless-table structure as the pesticide register was before its dedicated
+  parser; currently only generically prose-extracted. <span class="mono">DOSSIER.pdf</span> (a
+  narrative report on registered/unregistered pesticides) may also be worth mining separately for
+  a banned-product cross-check.</li>
   <li><b>Download model weights and build/obtain llama.cpp</b> — nothing past retrieval has been
   exercised end-to-end; this blocks router-to-answer testing, the profiler run, and the demo
   video.</li>
