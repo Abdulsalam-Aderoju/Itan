@@ -250,18 +250,57 @@ directly from <span class="mono">corpus/structured.db</span>:</p>
   built is a bulk auto-extraction with confidence scores attached but rarely acted on.
 </div>
 
+<h3>1.4 What "confidence" and "needs_review" actually measure</h3>
+<p><span class="mono">corpus/05_structure_extract.py</span> scans every document for a regex
+match — capitalized word(s) next to a pest keyword ("...worm", "...blight", "...borer") — then
+looks in the next 800 characters for section labels (<span class="mono">Symptoms:</span>,
+<span class="mono">Cultural control:</span>, <span class="mono">Chemical control:</span>). The
+formula is <span class="mono">confidence = 0.3 + 0.15 × (labels found nearby) + 0.1 (if a crop
+was nearby)</span>. No LLM, no human — a label-proximity count. It never looks at whether the
+captured text is actually correct, complete, or even coherent. Consequence: the highest
+confidence any row in the pest table ever reaches is 0.85, and even the small number of rows
+that clear the 0.7 "trusted" threshold include entries like <span class="mono">pest_name =
+"to control both\nleaf spot"</span> or <span class="mono">"the spread\nof rust"</span> — a
+regex capturing running prose around a keyword, not a clean extraction, regardless of what its
+confidence score says.</p>
+
 <div class="callout fix">
-  <b>Good news: this is already partly mitigated, just not documented.</b>
-  <span class="mono">engine/tools/pest_lookup/build_db.py</span> and
-  <span class="mono">engine/tools/crop_calendar/build_db.py</span> already build a curated,
-  deduplicated view for the tools to actually query — <span class="mono">pest_lookup.db</span>
-  holds 192 grouped entries (from the 14,369 raw rows, taking max confidence per symptom
-  cluster) and <span class="mono">crop_calendar.db</span> holds 22 (from 60). The tools are not
-  currently exposed to the raw noise. What's missing is (a) making this the documented, explicit
-  design decision rather than an implicit side effect of how the build scripts happen to work,
-  and (b) applying the same curation pass to <span class="mono">fertilizer_rate</span>, which
-  has no equivalent curated/deduplicated table yet and is queried closer to raw.
+  <b>The curated tables existed, but had the same blind spot — found and fixed 2026-08-17.</b>
+  <span class="mono">engine/tools/pest_lookup/build_db.py</span> already canonicalizes pest
+  names and groups/dedupes the 14,369 raw rows down to one record per (pest, crop). What it
+  didn't check: whether a group's merged record had any actual content. <b>140 of 192 curated
+  records (73%) had a matched pest name and crop but symptoms, cultural_control, AND
+  chemical_control all empty</b> — a phantom match: <span class="mono">pest_lookup()</span> would
+  return it as an ordinary hit (<span class="mono">data_available=True</span>, non-trivial
+  confidence), indistinguishable from a real match until every field was inspected. A confident
+  empty answer is worse than an honest miss, since nothing signals the caller to fall back to
+  Tier B retrieval instead. <b>Fixed:</b> <span class="mono">build_db.py</span> now drops a
+  group entirely if all three content fields are empty after merging.
+  <span class="mono">pest_lookup.db</span> rebuilt: 192 → 75 records, all 15 existing
+  <span class="mono">eval/pest_lookup</span> test cases still pass.
 </div>
+
+<div class="callout warn">
+  <b>The fix is necessary, not sufficient — a concrete example that still gets through.</b>
+  <span class="mono">crop=maize, pest_name=armyworm</span> (337 raw rows merged, confidence
+  0.7/"trusted") — exactly the record that would answer this session's flagship
+  fall-armyworm-on-maize question — has <i>empty</i> symptoms and chemical_control, and its one
+  populated field, cultural_control, reads: <i>"effects Toepfer &amp; Fallet 0.0-4.0 leaf damage
+  index Research assessing recent feeding damage, e.g. effects of plant protection prod-
+  Vegetative Davis 0-9 whorl &amp; furl damage scale"</i> — a fragment of a leaf-damage
+  <i>rating-scale methodology</i> table from the correct source paper, not actual control advice.
+  It has non-empty content, so the empty-record filter above doesn't (and shouldn't) remove it.
+  Retrieval (§2) handles this exact question well — 0.92 hit-rate, correctly surfaces the real
+  paper. The structured <span class="mono">pest_lookup</span> tool, for the identical question,
+  would not. Closing this gap needs either better section-boundary extraction (the label-window
+  regex is too easily misled by nearby tables/citations) or an actual relevance/quality check —
+  neither is a quick fix, and both are follow-up work, not done here.
+</div>
+
+<p>The same undocumented-implicit-curation pattern applies to
+<span class="mono">crop_calendar.db</span> (22 records from 60 raw rows) and should be assumed to
+carry a similar risk until checked the same way. <span class="mono">fertilizer_rate</span> has no
+curated table at all yet and is queried closer to raw — same class of risk, unaudited.</p>
 
 <h2 class="section-break"><span class="num">2</span>What Retrieval Actually Does</h2>
 
@@ -409,13 +448,18 @@ calculation as deterministic Python tools layered on top.</i>
 <p>This is narrower than v1's pitch. It is also true, measurable, and defensible under judge
 questioning in a way the broader claim currently is not.</p>
 
-<h3>4.2 Tier A needs a confidence gate, documented as a design decision</h3>
+<h3>4.2 Tier A needs a confidence gate AND a content gate, documented as a design decision</h3>
 <p>Add to v1 §3.3: a Tier A query only resolves directly to SQL if the underlying row's
-<span class="mono">confidence</span> is above a threshold (the curated
-<span class="mono">pest_lookup.db</span>/<span class="mono">crop_calendar.db</span> pattern
-already does an implicit version of this — make it explicit, apply the same treatment to
-<span class="mono">fertilizer_rate</span>, and route anything below threshold to Tier B
-retrieval + honest sourcing instead of presenting an unreviewed extraction as a certain fact).</p>
+<span class="mono">confidence</span> is above a threshold, <i>and</i> the fields it would actually
+present are non-empty. Confidence alone isn't enough — §1.4 showed a record can score above
+threshold ("trusted") while its retained field is a garbled fragment, and before the 2026-08-17
+fix, 73% of <span class="mono">pest_lookup.db</span> had passed its confidence bar while
+carrying zero content in every field. The empty-content gate is now applied in
+<span class="mono">pest_lookup/build_db.py</span> — apply the equivalent to
+<span class="mono">crop_calendar.db</span> (unaudited, same risk assumed) and
+<span class="mono">fertilizer_rate</span> (no curated table yet at all), and route anything
+that fails either gate to Tier B retrieval + honest sourcing instead of presenting an
+unreviewed or empty extraction as a certain fact.</p>
 
 <h3>4.3 Lead the demo and the video with pest diagnosis, not fertiliser calculation</h3>
 <p>v1's two-minute video plan (§13.2) opens on a fertiliser question. Given where the corpus's
@@ -441,6 +485,7 @@ underneath quietly isn't there.</p>
   <tr><td>Re-embed full corpus (<span class="mono">06_embed.py</span> + <span class="mono">07_bm25.py</span>)</td><td><span class="badge strong">done</span> — 100% coverage, 72,452/72,452 chunks in both indices</td></tr>
   <tr><td>RRF fusion weight/pool-depth tuning</td><td><span class="badge strong">done</span> — equal weighting confirmed optimal; the real fix was <span class="mono">RRF_CANDIDATE_POOL_MULT=8</span> (§2.3)</td></tr>
   <tr><td>Re-run <span class="mono">corpus/08_validate.py</span></td><td><span class="badge strong">done</span> — <b>0.92 hit-rate@5</b>, corrected to call <span class="mono">retrieve()</span> directly (§2.4)</td></tr>
+  <tr><td>Empty-content gate for <span class="mono">pest_lookup.db</span></td><td><span class="badge strong">done</span> — 140/192 (73%) phantom-match records dropped; 75 remain, all 15 existing tests pass (§1.4)</td></tr>
 </table>
 <p>Hit-rate@5 progression across this debugging session, all on the same 50-question set:
 <span class="mono">0.86 (dense-only, stale, mislabeled hybrid) → 0.60 (hybrid wired, still stale) →
@@ -456,9 +501,17 @@ underneath quietly isn't there.</p>
   <li><b>Investigate the variety-selection tier</b> — now the weakest at 60% hit-rate (§2.5),
   a gap that was previously masked by the coverage and pool-depth bugs rather than a new
   regression.</li>
-  <li><b>Apply confidence gating to <span class="mono">fertilizer_rate</span></b> the way
-  <span class="mono">pest_lookup</span> and <span class="mono">crop_calendar</span> already do
-  (§1.3, §4.2).</li>
+  <li><b>Audit <span class="mono">crop_calendar.db</span> for the same phantom-match pattern</b>
+  just fixed in <span class="mono">pest_lookup.db</span> (§1.4) — not yet checked, same risk
+  assumed until verified.</li>
+  <li><b>Apply an empty-content (and eventually a real quality) gate to
+  <span class="mono">fertilizer_rate</span></b> — it has no curated table at all yet and is
+  queried closer to raw than either <span class="mono">pest_lookup</span> or
+  <span class="mono">crop_calendar</span> (§1.3, §4.2).</li>
+  <li><b>Close the garbled-but-present gap</b> demonstrated by the maize/armyworm example
+  (§1.4) — the empty-content gate catches phantom matches but not populated fields containing
+  mis-scoped table/citation fragments. Needs better section-boundary extraction or a real
+  relevance check, not a quick fix.</li>
   <li><b>Audit for the same class of bug found in §2.4</b> — anywhere else in the codebase that
   reconstructs pieces of <span class="mono">RetrievalEngine</span>'s pipeline by hand instead of
   calling <span class="mono">retrieve()</span> is carrying the same silent-drift risk that hid

@@ -17,6 +17,26 @@ pest_name down to its keyword (see normalize.py), groups rows by
   - source_ids: up to MAX_SOURCE_IDS contributing citations (source_count
     records the true total, even when the stored list is capped)
 
+A canonical (pest, crop) group is DROPPED entirely -- not written, at any
+confidence -- if symptoms, cultural_control, and chemical_control are all
+empty after merging. Measured 2026-08-17: 140 of 192 groups (73%) were
+exactly this -- a matched pest name and crop with zero advisory content,
+because 05_structure_extract.py's SECTION_RE labels ("Symptoms:",
+"Cultural control:", "Chemical control:") never fired anywhere near the
+pest-keyword match in any contributing raw row. Before this filter,
+pest_lookup() would return these as ordinary matches (data_available=True,
+non-trivial confidence), indistinguishable from a real match until the
+caller inspected every field -- confidently returning nothing is a worse
+failure than an honest miss, since a caller checking only match_score/
+confidence has no signal to fall back to Tier B retrieval instead. This
+does NOT catch every quality problem -- a record can still pass this gate
+with genuinely garbled content in a populated field (mis-scoped label
+windows sometimes capture citation lists or unrelated table fragments
+instead of real advice; see Ìtàn_ADTC2026_Blueprint_v2.pdf for a worked
+example). That needs either better section-boundary extraction or a real
+content/relevance check, neither of which is a quick fix -- this filter
+only removes the unambiguous, cheaply-detectable case of no content at all.
+
 Runnable standalone: python engine/tools/pest_lookup/build_db.py
 """
 from __future__ import annotations
@@ -74,6 +94,7 @@ def main():
         groups[(canonical, crop_key)].append(r)
 
     inserted = 0
+    skipped_empty = 0
     for (canonical, crop_key), group_rows in groups.items():
         confidence = max(r["confidence"] for r in group_rows)
 
@@ -85,6 +106,13 @@ def main():
         growth_stage = longest("growth_stage")
         cultural_control = longest("cultural_control")
         chemical_control = longest("chemical_control")
+
+        if not (symptoms or cultural_control or chemical_control):
+            # Pest name + crop matched, but nothing else did -- a confident-
+            # looking empty record is worse than an honest miss. See module
+            # docstring.
+            skipped_empty += 1
+            continue
 
         all_source_ids = sorted({r["source_id"] for r in group_rows})
         source_ids = all_source_ids[:MAX_SOURCE_IDS]
@@ -102,7 +130,9 @@ def main():
     out_conn.commit()
 
     print(f"[pest_lookup] {len(rows)} raw rows -> {skipped_unparseable} unparseable "
-          f"(no keyword matched), {inserted} canonical (pest, crop) records written to {OUT_DB_PATH}")
+          f"(no keyword matched), {skipped_empty} skipped (matched but zero content in "
+          f"symptoms/cultural_control/chemical_control), {inserted} canonical (pest, crop) "
+          f"records written to {OUT_DB_PATH}")
     canonical_pests = sorted({k[0] for k in groups})
     print(f"[pest_lookup] Canonical pests with data: {canonical_pests}")
 
