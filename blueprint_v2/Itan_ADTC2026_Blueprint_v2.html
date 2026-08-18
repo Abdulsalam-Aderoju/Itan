@@ -233,13 +233,13 @@ directly from <span class="mono">corpus/structured.db</span>:</p>
 <table>
   <tr><th>Table</th><th>Rows</th><th>% flagged<br><span class="mono">needs_review</span></th><th>Avg confidence</th><th>Verdict</th></tr>
   <tr><td><b>pest</b></td><td>14,369</td><td>99.5%</td><td>0.399</td><td><span class="badge broken">volume, unverified</span></td></tr>
-  <tr><td>fertilizer_rate</td><td>3,025</td><td>95.4%</td><td>0.602</td><td><span class="badge broken">volume, unverified</span></td></tr>
+  <tr><td>fertilizer_rate</td><td>3,025 (65 curated*)</td><td>95.4%</td><td>0.602</td><td><span class="badge fixed">curated table now exists*</span></td></tr>
   <tr><td>spacing</td><td>425</td><td>33.2%</td><td>0.734</td><td><span class="badge thin">usable, thin</span></td></tr>
   <tr><td>variety</td><td>263</td><td>20.2%</td><td>0.735</td><td><span class="badge thin">usable, thin</span></td></tr>
   <tr><td>crop_calendar</td><td>60</td><td>11.7%</td><td>0.832</td><td><span class="badge thin">highest quality, far too thin</span></td></tr>
-  <tr><td>agrochemical</td><td>409*</td><td>6.6%*</td><td>0.93*</td><td><span class="badge fixed">real data, not yet wired in</span></td></tr>
+  <tr><td>agrochemical</td><td>687*</td><td>0%*</td><td>0.93*</td><td><span class="badge strong">real data, wired in, two registers</span></td></tr>
 </table>
-<p style="font-size:8.5pt;color:#5a675f">* Updated 2026-08-17 — see §1.5. The "1 row, effectively unbuilt" figures above the asterisk describe every OTHER table as measured; agrochemical specifically has since changed.</p>
+<p style="font-size:8.5pt;color:#5a675f">* Updated 2026-08-18 — see §1.5, §1.6. The "unverified" figures above the asterisk describe every OTHER table as measured in this row-set; agrochemical and fertilizer_rate specifically have since changed.</p>
 
 <div class="callout warn">
   <b>The number that matters most in this document.</b> 99.5% of the <span class="mono">pest</span>
@@ -353,11 +353,71 @@ chance against this document.</p>
 <p>Two more documents were found sitting in <span class="mono">corpus/raw/manual/</span> worth
 flagging while looking at this: <span class="mono">List-of-Registered-Animal-Health-Products-and-Agrochemicals.pdf</span>
 (a second real NAFDAC register, 2016-2018, same borderless-table structure as the pesticide
-register — currently only generically prose-extracted, same fix pattern applies) and
-<span class="mono">DOSSIER.pdf</span> (a 2023 HOMEF report on registered vs. unregistered
-pesticides in the Nigerian market — narrative, not tabular, would need different handling, but
-potentially valuable for cross-referencing banned/restricted products). Neither has been acted
-on — filed as follow-up.</p>
+register) and <span class="mono">DOSSIER.pdf</span> (a 2023 HOMEF report on registered vs.
+unregistered pesticides in the Nigerian market). Both resolved — see §1.6.</p>
+
+<h3>1.6 Follow-up items closed out: second register parsed, DOSSIER already covered, fertilizer_rate curated, crop_calendar audited</h3>
+
+<div class="callout fix">
+  <b>Second NAFDAC register — parsed and loaded.</b> New
+  <span class="mono">corpus/harvest/08_animal_health_pdf_extract.py</span> (same word-position
+  table-reconstruction approach as the pesticide-register parser, own column x-bands measured
+  from this document's header and confirmed stable across pages 1/2/40/76/77 of 77) extracted
+  281 rows. Corruption-detection thresholds were <i>not</i> copied from the pesticide-register
+  parser — this document's COMPOSITION column is a full feed-ingredient list (legitimately up to
+  256 characters), not a 1-2-word active ingredient, so the borrowed thresholds were flagging 27%
+  of rows as <span class="mono">needs_review</span> purely for being long, despite zero actual
+  merge-corruption signals (<span class="mono">multi_reg</span> count: 0 across all 281 rows).
+  Recalibrated against this document's own observed clean-data range; final run: 0 flagged, spot
+  checks (random sample + full-set jumbled-encoding scan) found no corruption. New
+  <span class="mono">corpus/harvest/09_animal_health_load.py</span> loads it into
+  <span class="mono">agrochemical</span> alongside the pesticide register.
+  <span class="mono">agrochemical</span> now holds <b>687 rows</b> (409 pesticide + 278 animal
+  health/agrochemical), both wired into <span class="mono">query_structured_db()</span> the same
+  way. Both stages added to <span class="mono">run_pipeline.sh</span>.
+</div>
+
+<div class="callout fix">
+  <b>DOSSIER.pdf — already covered, no action needed.</b> Read it directly: narrative policy
+  report (health/environmental risk discussion per active ingredient, e.g. Acephate,
+  Chlorpyrifos), zero tables, not a register — confirmed not table-shaped, so the dedicated-parser
+  treatment doesn't apply. Checked whether it needed anything else: it already went through the
+  generic pipeline and has 190 chunks in <span class="mono">chunks.parquet</span>, fully
+  searchable via retrieval today. Nothing further to do here.
+</div>
+
+<div class="callout fix">
+  <b><span class="mono">fertilizer_rate</span> — curated table built (issue #4).</b> Of 3,025 raw
+  rows, <span class="mono">rate_kg_ha</span> is populated on all of them (a row is only created
+  when a number was found), but <span class="mono">fertilizer_type</span> — which nutrient the
+  rate is for — is populated on only 121: a bare number with no identified nutrient isn't
+  independently useful. New <span class="mono">engine/tools/fertilizer_rate/</span> module
+  (mirroring <span class="mono">pest_lookup</span>'s structure) keeps only rows with both fields
+  present AND <span class="mono">needs_review='0'</span> — stricter than
+  <span class="mono">pest_lookup</span>'s gate, affordable here since coverage is small enough
+  (121 candidates) that the stricter bar doesn't cost much: 65 rows survive, covering 8 of 10
+  crops. Wired into <span class="mono">query_structured_db()</span> as an additional fact source
+  alongside <span class="mono">agri_calc.db</span>'s own small hand-seeded fertilizer table (6
+  rows) — additive, not a replacement. <b>Coverage limit:</b> every surviving row is nitrogen; the
+  extraction pattern has no phosphorus/potassium recognition, so this still can't answer
+  full NPK-blend questions.
+</div>
+
+<div class="callout fix">
+  <b><span class="mono">crop_calendar.db</span> audited (issue #3) — no phantom-match bug, but it
+  was stale.</b> Checked for the same empty-content pattern
+  <span class="mono">pest_lookup.db</span> had: none found, and it can't happen by
+  construction — <span class="mono">05_structure_extract.py</span>'s crop_calendar extraction
+  only creates a row when it captured an actual month value, unlike pest extraction, which
+  creates a row on any keyword match regardless of whether nearby content was found. What
+  <i>was</i> found: <span class="mono">crop_calendar.db</span> itself was stale — built from an
+  earlier, smaller version of <span class="mono">structured.db</span> (22 rows) than currently
+  exists (60 rows). Rebuilding brought it to 48 rows (8 crops, up from 60 raw minus exact
+  duplicates). Also fixed two stale docstrings discovered in the process: one claiming only 4
+  rows/1 crop existed (actually 60/8), one claiming harvest_window was never populated (it's
+  populated wherever the corpus has that data — confirmed live, e.g.
+  <span class="mono">crop_calendar("yam")</span> resolves both plant_window and harvest_window).
+</div>
 
 <h2 class="section-break"><span class="num">2</span>What Retrieval Actually Does</h2>
 
@@ -526,13 +586,13 @@ confirmed — better demonstrates the system's genuine depth. Keep the fertilise
 example (v1's "0.6 hectares... urea" question) as the second beat, since that demonstrates the
 tool-calling pillar, which is a separate strength from retrieval depth.</p>
 
-<h3>4.4 Scope zone-specific and agrochemical-specific claims down until the data supports them</h3>
+<h3>4.4 Scope zone-specific and PHI-dosage claims down — but registration lookups are now real</h3>
 <p>Do not claim zone-specific planting windows (v1's flagship Tier A example, "Maize window in
-Oyo") or registered-product PHI lookups (agrochemical table: 1 row) as core features in judge-facing
-material until <span class="mono">crop_calendar</span> and <span class="mono">agrochemical</span>
-get a real curation pass. Both are cuttable-if-thin per v1's own cut order (§10.4) — this is that
-principle being applied honestly rather than the promise being kept in the pitch while the data
-underneath quietly isn't there.</p>
+Oyo") or PHI/dosage-rate lookups as core features — neither NAFDAC register carries rate or
+pre-harvest-interval data, so that specific promise still isn't supportable. What changed as of
+§1.5/§1.6: "is this product registered, and what's its active ingredient/composition" is now a
+real, working, tested capability (687 rows, two registers, wired into Tier A) — safe to claim in
+judge-facing material specifically as a registration lookup, just not as a dosage guide.</p>
 
 <h2 class="section-break"><span class="num">5</span>Status &amp; Immediate Next Steps</h2>
 
@@ -545,6 +605,10 @@ underneath quietly isn't there.</p>
   <tr><td>Empty-content gate for <span class="mono">pest_lookup.db</span></td><td><span class="badge strong">done</span> — 140/192 (73%) phantom-match records dropped; 75 remain, all 15 existing tests pass (§1.4)</td></tr>
   <tr><td>Load NAFDAC pesticide register into <span class="mono">agrochemical</span></td><td><span class="badge strong">done</span> — 1 → 409 real rows via new <span class="mono">corpus/harvest/07_nafdac_load.py</span>, wired into <span class="mono">run_pipeline.sh</span> (§1.5)</td></tr>
   <tr><td>Wire <span class="mono">agrochemical</span> into a live query path</td><td><span class="badge strong">done</span> — <span class="mono">query_structured_db()</span> now matches question words against product_name/active_ingredient (product/active-ingredient keyed, unlike every other table it queries); verified against real questions ("is glyphosate registered", "active ingredient in Actellic"), all 120 agri_calc tests still pass</td></tr>
+  <tr><td>Parse + load second NAFDAC register (animal health/agrochemicals)</td><td><span class="badge strong">done</span> — 281 rows, thresholds recalibrated for this document (0 flagged after fix), <span class="mono">agrochemical</span> now 687 rows total (§1.6)</td></tr>
+  <tr><td>Evaluate <span class="mono">DOSSIER.pdf</span></td><td><span class="badge strong">done</span> — narrative, not tabular; already chunked (190 chunks), no action needed (§1.6)</td></tr>
+  <tr><td>Curate <span class="mono">fertilizer_rate</span></td><td><span class="badge strong">done</span> — new <span class="mono">engine/tools/fertilizer_rate/</span> module, 65 rows / 8 crops, wired into <span class="mono">query_structured_db()</span> (§1.6)</td></tr>
+  <tr><td>Audit <span class="mono">crop_calendar.db</span></td><td><span class="badge strong">done</span> — no phantom-match bug (can't happen by construction); found and fixed staleness instead (22→48 rows) plus two stale docstrings (§1.6)</td></tr>
 </table>
 <p>Hit-rate@5 progression across this debugging session, all on the same 50-question set:
 <span class="mono">0.86 (dense-only, stale, mislabeled hybrid) → 0.60 (hybrid wired, still stale) →
@@ -560,13 +624,6 @@ underneath quietly isn't there.</p>
   <li><b>Investigate the variety-selection tier</b> — now the weakest at 60% hit-rate (§2.5),
   a gap that was previously masked by the coverage and pool-depth bugs rather than a new
   regression.</li>
-  <li><b>Audit <span class="mono">crop_calendar.db</span> for the same phantom-match pattern</b>
-  just fixed in <span class="mono">pest_lookup.db</span> (§1.4) — not yet checked, same risk
-  assumed until verified.</li>
-  <li><b>Apply an empty-content (and eventually a real quality) gate to
-  <span class="mono">fertilizer_rate</span></b> — it has no curated table at all yet and is
-  queried closer to raw than either <span class="mono">pest_lookup</span> or
-  <span class="mono">crop_calendar</span> (§1.3, §4.2).</li>
   <li><b>Close the garbled-but-present gap</b> demonstrated by the maize/armyworm example
   (§1.4) — the empty-content gate catches phantom matches but not populated fields containing
   mis-scoped table/citation fragments. Needs better section-boundary extraction or a real
@@ -575,12 +632,6 @@ underneath quietly isn't there.</p>
   reconstructs pieces of <span class="mono">RetrievalEngine</span>'s pipeline by hand instead of
   calling <span class="mono">retrieve()</span> is carrying the same silent-drift risk that hid
   the pool-depth fix from validation the first time it was re-run.</li>
-  <li><b>Parse the second NAFDAC register</b> —
-  <span class="mono">List-of-Registered-Animal-Health-Products-and-Agrochemicals.pdf</span> (§1.5)
-  is the same borderless-table structure as the pesticide register was before its dedicated
-  parser; currently only generically prose-extracted. <span class="mono">DOSSIER.pdf</span> (a
-  narrative report on registered/unregistered pesticides) may also be worth mining separately for
-  a banned-product cross-check.</li>
   <li><b>Download model weights and build/obtain llama.cpp</b> — nothing past retrieval has been
   exercised end-to-end; this blocks router-to-answer testing, the profiler run, and the demo
   video.</li>

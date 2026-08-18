@@ -149,10 +149,13 @@ def crop_calendar(
     Raises InvalidInputError if `crop` is not one of the 10 target crops,
     or if `agro_zone` is given but not one of the 6 recognized zones.
     Returns plant_window=None / harvest_window=None (data_available=False)
-    if the crop is valid but the corpus has no calendar data for it --
-    the common case for 9 of the 10 crops today. harvest_window is None
-    for every crop today: 05_structure_extract.py has no harvest-window
-    extraction pattern yet, only planting-related ones.
+    if the crop is valid but the corpus has no calendar data for it -- as
+    of 2026-08-17, 8 of the 10 crops have at least one row (missing:
+    cowpea, pepper). 05_structure_extract.py does extract harvest_window
+    (a dedicated "harvested between X and Y" pattern, mirroring the
+    planting pattern), so it's populated wherever the corpus has that data
+    -- e.g. crop_calendar("yam") resolves both plant_window and
+    harvest_window today.
     """
     if not crop:
         raise InvalidInputError("Crop name cannot be empty.")

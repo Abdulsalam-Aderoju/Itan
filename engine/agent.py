@@ -95,6 +95,7 @@ def query_structured_db(question: str) -> tuple[str, list[str]]:
     """Query structured DBs (agri_calc.db and corpus/structured.db) for exact Tier A facts."""
     agri_db = Path(__file__).resolve().parent / "tools" / "agri_calc" / "agri_calc.db"
     corpus_db = Path(__file__).resolve().parent.parent / "corpus" / "structured.db"
+    fert_rate_db = Path(__file__).resolve().parent / "tools" / "fertilizer_rate" / "fertilizer_rate.db"
     
     q_lower = question.lower()
     crops = ["maize", "cassava", "rice", "yam", "cowpea", "tomato", "sorghum", "groundnut", "pepper", "soybean"]
@@ -130,7 +131,36 @@ def query_structured_db(question: str) -> tuple[str, list[str]]:
                 "query_structured_db: agri_calc.db lookup failed for crop=%s", target_crop
             )
 
-    # 2. Query corpus/structured.db (pests, varieties, calendars)
+    # 2. Query engine/tools/fertilizer_rate/fertilizer_rate.db -- corpus-
+    # extracted rates, curated (empty-content + needs_review gates) by
+    # engine/tools/fertilizer_rate/build_db.py. Additive to agri_calc.db's
+    # own small hand-seeded fertilizer_rate table above, not a replacement:
+    # coverage today is nitrogen-only (no P/K), so this can't answer full
+    # NPK-blend questions the way the hand-seeded table can for its crops.
+    if fert_rate_db.exists():
+        try:
+            conn = sqlite3.connect(fert_rate_db)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            rows = cursor.execute(
+                "SELECT * FROM fertilizer_rate WHERE crop = ? LIMIT 3", (target_crop,)
+            ).fetchall()
+            for r in rows:
+                facts.append(
+                    f"Fertilizer rate for {r['crop']} (from corpus literature): "
+                    f"{r['fertilizer_type']} at {r['rate_kg_ha']} kg/ha. Source: {r['source_id']}"
+                )
+                if r['source_id']:
+                    source_ids.append(str(r['source_id']))
+
+            conn.close()
+        except Exception:
+            logging.getLogger("itan.agent").exception(
+                "query_structured_db: fertilizer_rate.db lookup failed for crop=%s", target_crop
+            )
+
+    # 3. Query corpus/structured.db (pests, varieties, calendars)
     if corpus_db.exists():
         try:
             conn = sqlite3.connect(corpus_db)

@@ -40,17 +40,22 @@ APPLICANT / MANUFACTURER can wrap onto the lines in between.
 
 SCOPE, HONESTLY STATED. This PDF is a *registration* record -- it has no
 crop, application rate, or pre-harvest-interval columns at all (that data
-was never in NAFDAC's own register; the previous session's assumption
-that it would appear here once the table was parsed cleanly was wrong).
-So this script's output is NOT loaded into structured.db's `agrochemical`
-table, which exists to serve spray_dilution() and needs a real
-rate_per_ha -- inserting rows with a blank rate would just make that
-table's crop-specific matching silently pick a useless row. What this
-DOES produce is a clean, citable ground-truth list of real registered
-product names + active ingredients + registration numbers, useful for
-validating/enriching product names mentioned elsewhere in the corpus, or
-for hand-curating a few verified entries into engine/tools/agri_calc's
-agrochemical table the same way its existing example rows were seeded.
+was never in NAFDAC's own register).
+
+UPDATE (2026-08-17): this script's output IS now loaded into
+structured.db's `agrochemical` table, via corpus/harvest/07_nafdac_load.py
+-- a previous version of this docstring said it shouldn't be, reasoning
+that spray_dilution() "needs a real rate_per_ha" and would silently pick
+a useless blank-rate row. That reasoning was based on a mistaken premise:
+spray_dilution() does NOT read structured.db's `agrochemical` table at
+all -- it reads a completely separate, hand-seeded database
+(engine/tools/agri_calc/agri_calc.db, built by seed_real_db.py). The two
+tables share a name but are unrelated files with unrelated callers, so
+loading this registration data into structured.db's `agrochemical` never
+touches spray_dilution()'s matching logic. It's instead queried by
+engine/agent.py's query_structured_db() for a separate, narrower purpose:
+"is this product registered, what's its active ingredient" -- explicitly
+not "what rate should I use," which still has no data source here.
 
 Output: corpus/harvest/nafdac_pesticide_register.csv
 

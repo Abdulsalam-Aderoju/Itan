@@ -9,11 +9,19 @@ across a document) and copies rows into a stable, module-local schema so
 the crop_calendar() tool function does not need to reach into the corpus
 harvest pipeline's internals at call time.
 
-NOTE ON COVERAGE: as of this writing, corpus/structured.db's crop_calendar
-table has only 4 rows total, covering a single crop (yam) out of the 10
-target crops, and the extractor has no harvest-window pattern at all (only
-plant_in_month / planting_window / first_rains). This script surfaces
-whatever exists rather than filling gaps -- see README.md.
+NOTE ON COVERAGE: as of 2026-08-17, corpus/structured.db's crop_calendar
+table has 60 rows, covering 8 of the 10 target crops (missing: cowpea,
+pepper). Audited the same way pest_lookup.db was audited for phantom
+empty-content matches (see engine/tools/pest_lookup/build_db.py) -- no
+equivalent bug found here: every row has a non-empty month_start, because
+05_structure_extract.py's crop_calendar extraction only creates a row when
+it actually captured a month value, unlike pest extraction, which creates
+a row on any pest-keyword regex match regardless of whether the nearby
+symptom/control sections were found. This script surfaces whatever exists
+rather than filling gaps -- see README.md. Zone/state coverage is still
+thin (most rows have neither) -- that's a corpus-content gap, not a bug
+here; see Itan_ADTC2026_Blueprint_v2.pdf SS2.5 for the retrieval-side
+confirmation that zone-specific answers aren't currently supportable.
 
 Runnable standalone: python engine/tools/crop_calendar/build_db.py
 """
