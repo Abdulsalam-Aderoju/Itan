@@ -609,6 +609,8 @@ judge-facing material specifically as a registration lookup, just not as a dosag
   <tr><td>Evaluate <span class="mono">DOSSIER.pdf</span></td><td><span class="badge strong">done</span> — narrative, not tabular; already chunked (190 chunks), no action needed (§1.6)</td></tr>
   <tr><td>Curate <span class="mono">fertilizer_rate</span></td><td><span class="badge strong">done</span> — new <span class="mono">engine/tools/fertilizer_rate/</span> module, 65 rows / 8 crops, wired into <span class="mono">query_structured_db()</span> (§1.6)</td></tr>
   <tr><td>Audit <span class="mono">crop_calendar.db</span></td><td><span class="badge strong">done</span> — no phantom-match bug (can't happen by construction); found and fixed staleness instead (22→48 rows) plus two stale docstrings (§1.6)</td></tr>
+  <tr><td>Publisher-aware reranking (boost extension-guide chunks)</td><td><span class="badge strong">done</span> — <span class="mono">EXTENSION_PUBLISHER_BOOST=2.0</span>, tuned against the validation set; honest caveat: coarse mitigation, not a topical fix (§6.3)</td></tr>
+  <tr><td>Log Aderoju's real end-to-end probes as a tracked regression set</td><td><span class="badge strong">done</span> — <span class="mono">eval/datasets/known_issues_e2e_probes.jsonl</span>, 5 questions with full reasoning (§6.1)</td></tr>
 </table>
 <p>Hit-rate@5 progression across this debugging session, all on the same 50-question set:
 <span class="mono">0.86 (dense-only, stale, mislabeled hybrid) → 0.60 (hybrid wired, still stale) →
@@ -635,7 +637,83 @@ judge-facing material specifically as a registration lookup, just not as a dosag
   <li><b>Download model weights and build/obtain llama.cpp</b> — nothing past retrieval has been
   exercised end-to-end; this blocks router-to-answer testing, the profiler run, and the demo
   video.</li>
+  <li><b>Investigate the hallucinated-citation bug</b> found in §6 — a Tier B answer printed an
+  inline citation label for a source not present in its own <span class="mono">source_ids</span>.
+  Worth checking the Tier B phrasing prompt/constraint in <span class="mono">engine/agent.py</span>.</li>
+  <li><b>Source more extension-guide content</b> (CABI PlantWise, FAO plant protection manuals,
+  more NAERLS bulletins, IITA/CGIAR protocols) — see §6. The publisher-boost mitigation can only
+  reorder existing candidates; it cannot manufacture coverage that doesn't exist. This is the
+  actual fix for the corpus-composition problem, not a code change.</li>
 </ol>
+
+<h2 class="section-break"><span class="num">6</span>First Real End-to-End Evidence — Corpus Composition Is a Launch-Blocking Problem, Not a Nuance</h2>
+
+<div class="callout warn">
+  <b>Corpus version mismatch, unresolved as of this writing.</b> This document's corpus numbers
+  (§1) come from a local 72,452-chunk pull. Teammate Abdulsalam Aderoju ran the first real
+  end-to-end queries (full model + retrieval, not a retrieval-only smoke test) against his own
+  local pull: <b>168,869 chunks</b> — more than double. Corpus artifacts are gitignored and pulled
+  independently per-machine from a shared Drive folder, so nothing has kept them in sync. Team
+  decision (2026-08-18): the local 72,452-chunk corpus referenced throughout this document is
+  authoritative and will be re-uploaded to the shared Drive folder. Everything below was measured
+  on Aderoju's larger pull, before that reconciliation — worth re-running once the authoritative
+  version is the one everyone has.
+</div>
+
+<h3>6.1 What the probes found</h3>
+<p>Six real questions, run against a live model + retrieval server. The router tiered every one
+correctly (all B). Of the five answers actually captured:</p>
+<table>
+  <tr><th>Question (abbreviated)</th><th>Answer</th><th>Assessment</th></tr>
+  <tr><td>Windowpane patches + caterpillars in maize funnel</td><td>Corn earworm (<i>Helicoverpa zea</i>)</td><td><span class="badge broken">wrong species</span> — a New World pest; the West African presentation is textbook fall armyworm</td></tr>
+  <tr><td>Cassava leaves curling, yellow mosaic, stunted</td><td>Cassava Mosaic Disease, cited "[naerls_maize_2021_p14]"</td><td><span class="badge broken">hallucinated citation</span> — diagnosis is plausible, but that citation is a MAIZE source not present in the response's own <span class="mono">source_ids</span></td></tr>
+  <tr><td>White waxy insects on cassava shoot tips</td><td>African cassava whitefly (<i>Bemisia tabaci</i>)</td><td><span class="badge strong">plausibly correct</span></td></tr>
+  <tr><td>Tomato fruit entry holes + tunnelling</td><td>Anthracnose fruit rot (fungal)</td><td><span class="badge broken">category error</span> — tunnelling describes insect boring damage, not a fungal lesion</td></tr>
+  <tr><td>Cowpea flower drop + blackened pods, tiny insects</td><td>Maruca pod borer (<i>Maruca testulalis</i>)</td><td><span class="badge strong">plausibly correct</span></td></tr>
+</table>
+<p>Not "mostly wrong" as a blanket verdict — closer to 2 of 5 clearly wrong, 1 right-diagnosis
+undermined by a fabricated citation, 2 plausibly correct. All five, with full reasoning, are now
+tracked in <span class="mono">eval/datasets/known_issues_e2e_probes.jsonl</span> so future
+corpus/engine changes can be checked against these specific real failures instead of
+re-litigating from scratch. Not independently domain-verified by an agricultural expert — treat
+as informed flags.</p>
+
+<h3>6.2 Why: the corpus is ~93% academic papers</h3>
+<p>On Aderoju's pull: 164,490 OpenAlex + 4,895 Semantic Scholar (across two inconsistently-named
+publisher values) vs. 582 <span class="mono">manual</span> (real extension guides — NAERLS
+bulletins, national handbooks). Same skew locally, proportionally milder (63,107 + 8,496 academic
+vs. 849 manual = 1.17% manual, vs. 0.34% on the larger pull) — meaning whichever process keeps
+growing the corpus is adding academic papers faster than extension content, worsening the ratio
+over time rather than improving it. His diagnosis of why this specifically breaks answers:
+research papers answer "did treatment X reduce yield loss significantly," not "what is eating my
+maize" — the pest is mentioned in passing while investigating something else, global literature
+isn't filtered to West African species, and papers report findings rather than the dosed,
+timed, actionable instructions Tier A's entire design depends on. <b>The correct fix is sourcing
+more CABI PlantWise, FAO, NAERLS, and IITA/CGIAR content — a harvesting project, not a code
+change.</b></p>
+
+<h3>6.3 What was shipped in the meantime: publisher-aware reranking</h3>
+<p><span class="mono">rrf_fuse()</span> now boosts any candidate chunk whose
+<span class="mono">publisher</span> is a recognized extension source (currently just
+<span class="mono">"manual"</span>) by <span class="mono">EXTENSION_PUBLISHER_BOOST = 2.0</span>,
+picked via <span class="mono">corpus/tune_publisher_boost.py</span> against the 50-question
+validation set: hit-rate@5 holds flat at 0.92 through boost=2.0 (15 of 50 questions gain a manual
+chunk in their top-4 that wasn't there before), degrading past that (0.90 at 2.5, 0.88 at 3.0) as
+manual chunks start displacing genuinely correct academic hits on questions with no manual
+alternative.</p>
+<div class="callout warn">
+  <b>Honestly, this is a coarse mitigation, not a topical fix.</b> Tested directly on the
+  fall-armyworm-on-maize example used throughout this project: the boost displaced two
+  near-duplicate, equally off-topic academic chunks (a storage/aflatoxin study appearing under two
+  different source IDs) with two manual chunks that are <i>also</i> off-topic (post-harvest
+  storage guidance, not field pest control) — genuine Nigerian extension literature, just not
+  about this question. The two actually-relevant chunks (windowpane/frass damage description,
+  correct pest) were present before this change and remained present after. Net effect for that
+  specific query: unchanged practical relevance, better provenance on the padding chunks. It can
+  only reorder what's already a retrieval candidate — it cannot manufacture extension-guide
+  coverage for a question the corpus has no extension source for at all, which describes most
+  pest/disease questions today given manual content is ~1% of the corpus.
+</div>
 
 <div class="pagefoot">Ìtàn · ADTC 2026 Team Blueprint v2 — supersedes only where noted; v1 remains the reference for architecture, scoring-formula thesis and build plan</div>
 

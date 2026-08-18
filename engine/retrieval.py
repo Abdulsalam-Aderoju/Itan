@@ -20,6 +20,36 @@ maize streak-virus paper -- both are correctly maize-tagged, so a crop
 filter has nothing to discriminate on there; that's a separate, harder
 problem -- likely a corpus content gap or dense/BM25 balance issue, not
 addressed here).
+
+Publisher-aware reranking (2026-08-18): the corpus is ~93% academic
+papers (OpenAlex/Semantic Scholar) and ~1% real extension guides
+(publisher == "manual" -- NAERLS bulletins, national handbooks). Real
+end-to-end queries against a larger pull of the same corpus (168k chunks,
+run by a teammate) surfaced this concretely: a maize whorl-damage question
+answered with Helicoverpa zea (a New World pest, not relevant to Nigeria)
+and a cassava-mosaic question answered from a Brazilian agronomy journal
+-- retrieval found topically-adjacent chunks correctly, but "topically
+adjacent" and "the right species/geography/actionable guidance" are not
+the same thing, and academic papers win by sheer volume whenever both
+exist. rrf_fuse() now also boosts any candidate whose publisher is a
+recognized extension source.
+
+Measured on the fall-armyworm-on-maize example used throughout this
+project's testing: this does NOT reliably fix topical precision within a
+single query -- on that example, the boost displaced two near-duplicate,
+equally off-topic academic chunks (a storage/aflatoxin study, appearing
+twice under different source_ids) with two manual chunks that are also
+off-topic (post-harvest storage, not field pest control) but are genuine
+Nigerian extension literature rather than duplicate filler. The two
+actually-relevant chunks (windowpane/frass damage description, correct
+pest) were present before this change and remained present after --
+same practical top-4 relevance, better provenance on the padding. This is
+a coarse, corpus-wide mitigation, not a targeted topical fix: it can only
+promote what's already a retrieval candidate, and manual content is too
+thin (~1%) to have a matching chunk for every query. Sourcing more
+extension-guide content is the actual fix -- see
+Itan_ADTC2026_Blueprint_v2.pdf and corpus/tune_publisher_boost.py for the
+measured hit-rate/promotion numbers behind the constant below.
 """
 from __future__ import annotations
 
@@ -47,6 +77,27 @@ ONNX_DIR = CORPUS_DIR / "models" / "bge-small-en-v1.5-onnx"
 CROP_MATCH_BOOST = 1.5     # multiplier for a chunk tagged with a crop the query mentions
 CROP_MISMATCH_PENALTY = 0.5  # multiplier for a chunk tagged with a DIFFERENT, specific crop
 # (chunks with no crop tag at all get neither -- see module docstring)
+
+# Extension-guide (`publisher == "manual"`) chunks are boosted over academic
+# ones (OpenAlex / Semantic Scholar) -- see module docstring for why this
+# matters (real end-to-end queries surfacing a New World pest and a
+# Brazilian journal for Nigeria-relevant questions). Swept 2026-08-18 with
+# corpus/tune_publisher_boost.py against the 50-question validation set:
+# hit-rate@5 holds flat at 0.92 through boost=2.0, with 15/50 questions
+# gaining a manual-source chunk in their top-4 that wasn't there under
+# unboosted fusion; degrades past 2.0 (0.90 at 2.5, 0.88 at 3.0) as manual
+# chunks start displacing correct academic-sourced hits on questions with
+# no manual alternative. 2.0 is the highest value with zero measured
+# accuracy cost. Only a partial mitigation: manual is ~1% of the corpus,
+# so this can only reorder what's already there, not manufacture
+# extension-guide content that doesn't exist -- sourcing more of it is the
+# actual fix (see Itan_ADTC2026_Blueprint_v2.pdf on Aderoju's probe
+# questions).
+EXTENSION_PUBLISHER_BOOST = 2.0
+EXTENSION_PUBLISHERS = {"manual"}
+# "Semantic Scholar" and "Semantic_Scholar" both appear in the corpus (an
+# unrelated naming inconsistency from harvesting) -- both are academic,
+# neither is in the boost set.
 
 # How many dense/BM25 candidates retrieve() pulls per side before RRF fusion,
 # as a multiple of top_k. Swept 2026-08-17 with corpus/tune_rrf.py against the
@@ -195,6 +246,16 @@ class RetrievalEngine:
                     scores[cid] *= CROP_MATCH_BOOST
                 else:
                     scores[cid] *= CROP_MISMATCH_PENALTY
+
+        if self.chunks_df is not None:
+            for cid in scores:
+                if cid not in self.chunks_df.index:
+                    continue
+                row = self.chunks_df.loc[cid]
+                if isinstance(row, pd.DataFrame):
+                    row = row.iloc[0]
+                if str(row.get("publisher", "")) in EXTENSION_PUBLISHERS:
+                    scores[cid] *= EXTENSION_PUBLISHER_BOOST
 
         sorted_cids = sorted(scores.items(), key=lambda kv: -kv[1])
         return [cid for cid, _ in sorted_cids[:top_k]]
